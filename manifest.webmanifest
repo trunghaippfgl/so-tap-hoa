@@ -1,0 +1,23 @@
+{
+  "name": "Sổ Tạp Hóa",
+  "short_name": "Sổ Tạp Hóa",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f3",
+  "theme_color": "#1f8f5f",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "description": "Quản lý bán hàng, kho, date và đối chiếu doanh thu đơn giản cho cửa hàng tạp hóa."
+}
