@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V0.2.1</title>
+<title>Sổ Tạp Hóa - MVP V0.2.2.2</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -23,7 +23,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 .bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(540px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);padding:7px 6px calc(7px + env(safe-area-inset-bottom));z-index:10}.nav{border:0;background:none;color:#708179;font-size:10px;padding:4px 2px}.nav b{display:block;font-size:21px}.nav.on{color:var(--green);font-weight:800}.sectiontitle{display:flex;justify-content:space-between;align-items:center;margin:10px 2px}.sectiontitle h2{font-size:17px;margin:0}.muted{color:var(--muted)}.hidden{display:none!important}.tiny{font-size:11px}.right{text-align:right}.success{color:var(--green)}.danger{color:var(--red)}
 .modal{position:fixed;inset:0;background:#0007;z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.on{display:flex}.sheet{width:min(540px,100%);max-height:92vh;overflow:auto;background:var(--bg);border-radius:24px 24px 0 0;padding:18px 14px 28px}.sheethead{display:flex;justify-content:space-between;align-items:center}.x{border:0;background:#fff;border-radius:12px;width:40px;height:40px;font-size:20px}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:#15392d;color:#fff;padding:11px 14px;border-radius:12px;z-index:99;display:none;max-width:90%;font-size:13px}
 
-.scanner-box{background:#07110d;border-radius:18px;overflow:hidden;min-height:260px;display:grid;place-items:center;color:#fff;position:relative}.scanner-box video{width:100%!important;height:auto!important;object-fit:cover}.scanner-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.manual-code{display:flex;gap:8px}.manual-code input{flex:1}.manual-code button{width:auto;white-space:nowrap}.scan-status{margin-top:10px;font-size:13px;font-weight:700;color:var(--green)}
+.scanner-box{background:#07110d;border-radius:18px;overflow:hidden;min-height:320px;display:grid;place-items:center;color:#fff;position:relative}.scanner-box video{width:100%!important;height:100%!important;min-height:320px!important;object-fit:cover}.scanner-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.zoom-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.zoom-tools button{flex:1;min-width:74px;border:1px solid #cfe8dc;background:#f4fbf7;color:#176143;border-radius:12px;padding:10px 8px;font-weight:800}.zoom-tools button.on{background:#1f8f5f;color:white;border-color:#1f8f5f}.small-code-tip{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff6d9;color:#6b4b00;font-size:12px;line-height:1.45}.manual-code{display:flex;gap:8px}.manual-code input{flex:1}.manual-code button{width:auto;white-space:nowrap}.scan-status{margin-top:10px;font-size:13px;font-weight:700;color:var(--green)}
 </style>
 </head>
 <body><div class="app">
@@ -69,7 +69,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <section id="more" class="screen">
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" onclick="loadDemo()">🧪 Nạp lại dữ liệu mẫu</button><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.2.1</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.2.2.2</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
 </section>
 
 <nav class="bottom">
@@ -91,7 +91,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><div class="tiny muted">Chỉ cần 3 thông tin để bắt đầu bán. Các thông tin nâng cao có thể bổ sung sau.</div><label>Tên sản phẩm *</label><input id="newName" placeholder="VD: Nước suối Lavie 500ml"><label>Giá bán *</label><input id="newPrice" type="number" inputmode="numeric" placeholder="10000"><div class="row"><div><label>Đơn vị lẻ</label><input id="newBase" placeholder="chai / gói / hộp"></div><div><label>1 thùng/lốc = ?</label><input id="newCase" type="number" value="1" min="1"></div></div><label>Barcode (không bắt buộc)</label><input id="newBarcode" inputmode="numeric" placeholder="Quét hoặc nhập mã"><button class="bigbtn" style="margin-top:14px" onclick="saveNewProduct()">LƯU & BẮT ĐẦU BÁN</button></div></div></div>
 
 <div id="scannerModal" class="modal"><div class="sheet"><div class="sheethead"><h2>📷 Quét barcode</h2><button class="x" onclick="closeScanner()">✕</button></div>
-<div class="card"><div id="reader" class="scanner-box"><div>Đang chuẩn bị camera…</div></div><div id="scanStatus" class="scan-status"></div><div class="scanner-help">Đưa mã vạch vào giữa camera. App sẽ tự nhận khi mã đủ rõ. Nếu camera không hoạt động, nhập mã bên dưới.</div></div>
+<div class="card"><div id="reader" class="scanner-box"><div>Đang chuẩn bị camera…</div></div><div id="scanStatus" class="scan-status"></div><div class="scanner-help">Đưa mã vạch nằm ngang, chiếm khoảng 1/2–2/3 chiều rộng khung. Giữ yên 1–2 giây để camera lấy nét.</div><div class="zoom-tools"><button id="zoom1" class="on" onclick="setScanZoom(1)">1×</button><button id="zoom2" onclick="setScanZoom(2)">🔎 2×</button><button id="zoom3" onclick="setScanZoom(3)">🔎 3×</button><button onclick="toggleTorch()">🔦 Đèn</button></div><div class="small-code-tip">Mã vạch nhỏ: thử 2× hoặc 3×, giữ điện thoại cách mã khoảng 10–20 cm rồi dịch chậm gần/xa đến khi nét.</div></div>
 <div class="card"><label>Nhập mã barcode thủ công</label><div class="manual-code"><input id="manualBarcode" inputmode="numeric" placeholder="VD: 893..."><button class="bigbtn blue" style="padding:12px;font-size:14px" onclick="useManualBarcode()">DÙNG MÃ</button></div></div>
 </div></div>
 <div id="toast" class="toast"></div>
@@ -124,7 +124,7 @@ function addCart(id){let p=data.products.find(x=>x.id===id);if(!p||p.stock<=0)re
 function renderCart(){let ids=Object.keys(cart).filter(id=>cart[id]>0);let total=0,count=0;document.getElementById('cart').innerHTML=ids.map(id=>{let p=data.products.find(x=>x.id===id),q=cart[id],sub=p.price*q;total+=sub;count+=q;return `<div class="product"><div><div class="name">${p.name}</div><small>${money(p.price)} × ${q}</small></div><div class="qtyctrl"><button class="circle" onclick="chgCart('${id}',-1)">−</button><b>${q}</b><button class="circle" onclick="chgCart('${id}',1)">＋</button></div></div>`}).join('')||'<div class="muted tiny">Chưa có sản phẩm.</div>';document.getElementById('cartTotal').textContent=money(total);document.getElementById('cartCount').textContent=count+' món'}
 function chgCart(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];let p=data.products.find(x=>x.id===id);if(cart[id]>p.stock)cart[id]=p.stock;renderCart()}
 function checkout(method){let ids=Object.keys(cart);if(!ids.length)return toast('Giỏ hàng đang trống');let total=0,items=[];for(let id of ids){let p=data.products.find(x=>x.id===id),q=cart[id];if(q>p.stock)return toast('Tồn kho không đủ: '+p.name);p.stock-=q;total+=p.price*q;items.push({productId:id,name:p.name,qty:q,price:p.price})}data.sales.push({id:'S'+Date.now(),date:today(),method,total,items,createdAt:Date.now()});cart={};save();toast('✅ Đã bán '+money(total));go('home')}
-let scanner=null,scanMode='sell',scanBusy=false;
+let scanner=null,scanMode='sell',scanBusy=false,currentScanZoom=1,torchOn=false,scanCaps=null;
 function openScanner(mode){
   scanMode=mode||'sell'; scanBusy=false;
   document.getElementById('manualBarcode').value='';
@@ -135,23 +135,64 @@ function openScanner(mode){
 async function startScanner(){
   const box=document.getElementById('reader');
   box.innerHTML='<div>Đang mở camera…</div>';
+  currentScanZoom=1; torchOn=false; scanCaps=null; updateZoomButtons();
   try{
     if(typeof Html5Qrcode==='undefined') throw new Error('Không tải được bộ đọc barcode');
     scanner=new Html5Qrcode('reader');
-    const config={fps:10,qrbox:{width:280,height:150},aspectRatio:1.777778,formatsToSupport:[
-      Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39
-    ]};
+    const config={
+      fps:15,
+      qrbox:(vw,vh)=>({width:Math.max(260,Math.floor(vw*0.92)),height:Math.max(120,Math.min(190,Math.floor(vh*0.42)))}),
+      aspectRatio:1.333333,
+      disableFlip:true,
+      formatsToSupport:[
+        Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39
+      ]
+    };
     await scanner.start({facingMode:'environment'},config,(code)=>handleBarcode(code),()=>{});
-    document.getElementById('scanStatus').textContent='Camera đã sẵn sàng — đưa mã vạch vào khung';
+    document.getElementById('scanStatus').textContent='Camera đã sẵn sàng — mã nhỏ có thể bấm 2× / 3×';
+    // Ưu tiên độ phân giải cao và autofocus liên tục nếu thiết bị hỗ trợ.
+    try{
+      if(scanner.getRunningTrackCapabilities) scanCaps=scanner.getRunningTrackCapabilities();
+      const adv=[];
+      if(scanCaps && scanCaps.focusMode && Array.from(scanCaps.focusMode).includes('continuous')) adv.push({focusMode:'continuous'});
+      if(adv.length && scanner.applyVideoConstraints) await scanner.applyVideoConstraints({advanced:adv});
+    }catch(e){ console.debug('Camera constraints not supported',e); }
   }catch(e){
     console.error(e);
     box.innerHTML='<div style="padding:20px;text-align:center">⚠️ Không mở được camera.<br><small>Kiểm tra quyền Camera hoặc nhập mã thủ công bên dưới.</small></div>';
     document.getElementById('scanStatus').textContent='';
   }
 }
+function updateZoomButtons(){
+  [1,2,3].forEach(z=>{const b=document.getElementById('zoom'+z);if(b)b.classList.toggle('on',currentScanZoom===z)});
+}
+async function setScanZoom(wanted){
+  if(!scanner) return toast('Camera chưa sẵn sàng');
+  try{
+    if(!scanCaps && scanner.getRunningTrackCapabilities) scanCaps=scanner.getRunningTrackCapabilities();
+    const z=scanCaps&&scanCaps.zoom;
+    if(!z){ toast('Máy này không hỗ trợ zoom camera trong trình duyệt'); return; }
+    const min=Number(z.min||1),max=Number(z.max||wanted),step=Number(z.step||0.1);
+    let target=Math.max(min,Math.min(max,wanted));
+    if(step>0) target=Math.round(target/step)*step;
+    await scanner.applyVideoConstraints({advanced:[{zoom:target}]});
+    currentScanZoom=wanted; updateZoomButtons();
+    document.getElementById('scanStatus').textContent='Đang quét ở '+target.toFixed(target%1?1:0)+'× — giữ mã thật nét trong khung';
+  }catch(e){ console.debug(e); toast('Không đổi được zoom trên camera này'); }
+}
+async function toggleTorch(){
+  if(!scanner) return toast('Camera chưa sẵn sàng');
+  try{
+    if(!scanCaps && scanner.getRunningTrackCapabilities) scanCaps=scanner.getRunningTrackCapabilities();
+    if(!(scanCaps&&scanCaps.torch)){ toast('Máy/trình duyệt này không hỗ trợ bật đèn'); return; }
+    torchOn=!torchOn;
+    await scanner.applyVideoConstraints({advanced:[{torch:torchOn}]});
+    toast(torchOn?'🔦 Đã bật đèn':'Đã tắt đèn');
+  }catch(e){ torchOn=false; toast('Không bật được đèn camera'); }
+}
 async function stopScanner(){
   try{if(scanner){await scanner.stop();await scanner.clear();}}catch(e){}
-  scanner=null;
+  scanner=null; scanCaps=null; torchOn=false; currentScanZoom=1;
 }
 async function closeScanner(){await stopScanner();document.getElementById('scannerModal').classList.remove('on')}
 function useManualBarcode(){let code=(document.getElementById('manualBarcode').value||'').trim();if(!code)return toast('Nhập mã barcode');handleBarcode(code)}
