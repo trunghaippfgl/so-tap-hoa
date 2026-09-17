@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V0.4</title>
+<title>Sổ Tạp Hóa - MVP V0.4.1</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -72,7 +72,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" onclick="loadDemo()">🧪 Nạp lại dữ liệu mẫu</button><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.4</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.4.1</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
 </section>
 
 <nav class="bottom">
@@ -102,6 +102,8 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><div class="brandcat-search"><input id="brandCatalogSearch" placeholder="Tìm tên, dung tích, nhóm hàng..." oninput="renderBrandCatalog()"><select id="brandCatalogBrand" onchange="renderBrandCatalog()"></select></div><div id="brandCatalogCount" class="catalog-count"></div><div id="brandCatalogSource" class="brand-source"></div></div>
 <div class="card" id="brandCatalogList"></div></div></div>
 <div id="toast" class="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const KEY='soTapHoaMvp01';
@@ -264,7 +266,20 @@ async function handleBarcode(code){
     else{addCart(p.id);go('sell');toast('✅ Đã quét: '+p.name)}
     setTimeout(()=>scanBusy=false,700); return;
   }
-  document.getElementById('scanStatus').textContent='🔎 Đang tra tên sản phẩm…';
+  document.getElementById('scanStatus').textContent='☁️ Đang tra kho barcode Sổ Tạp Hóa…';
+  const cloud=await lookupCloudProduct(code);
+  if(cloud&&cloud.name){
+    document.getElementById('scannerModal').classList.remove('on');
+    openNewProduct();
+    document.getElementById('newBarcode').value=code;
+    document.getElementById('newName').value=cloud.name+(cloud.size?' '+cloud.size:'');
+    document.getElementById('newBase').value=cloud.unit||cloud.base||'cái';
+    document.getElementById('newCase').value=cloud.caseSize||1;
+    const h=document.getElementById('catalogPickedHint');h.style.display='block';h.textContent='☁️ Đã nhận từ kho barcode chung: '+cloud.name+'. Chỉ cần nhập giá bán rồi Lưu.';
+    toast('☁️ Kho chung nhận diện: '+cloud.name);
+    setTimeout(()=>scanBusy=false,700); return;
+  }
+  document.getElementById('scanStatus').textContent='🔎 Chưa có trong kho chung — đang tra nguồn khác…';
   const verified=VERIFIED_BARCODES[code];
   if(verified){
     document.getElementById('scannerModal').classList.remove('on');
