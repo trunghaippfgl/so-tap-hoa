@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V0.2</title>
+<title>Sổ Tạp Hóa - MVP V0.2.1</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -69,7 +69,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <section id="more" class="screen">
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" onclick="loadDemo()">🧪 Nạp lại dữ liệu mẫu</button><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.2</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.2.1</b><div class="tiny muted" style="margin-top:6px">Dữ liệu được lưu trên thiết bị bằng localStorage. Chưa dùng Firebase.</div></div>
 </section>
 
 <nav class="bottom">
@@ -155,17 +155,67 @@ async function stopScanner(){
 }
 async function closeScanner(){await stopScanner();document.getElementById('scannerModal').classList.remove('on')}
 function useManualBarcode(){let code=(document.getElementById('manualBarcode').value||'').trim();if(!code)return toast('Nhập mã barcode');handleBarcode(code)}
+function guessBaseUnit(name,quantity){
+  const t=((name||'')+' '+(quantity||'')).toLowerCase();
+  if(/lon|can/.test(t)) return 'lon';
+  if(/chai|bottle/.test(t)) return 'chai';
+  if(/hộp|box|carton/.test(t)) return 'hộp';
+  if(/gói|pack|packet|sachet/.test(t)) return 'gói';
+  if(/túi|bag/.test(t)) return 'túi';
+  if(/kg|kilogram/.test(t)) return 'kg';
+  if(/g|gram/.test(t)) return 'gói';
+  return 'cái';
+}
+async function fetchProductJson(url){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),4500);
+  try{
+    const r=await fetch(url,{signal:ctrl.signal,headers:{'Accept':'application/json'}});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){return null}finally{clearTimeout(timer)}
+}
+async function lookupBarcodeOnline(code){
+  const fields='code,product_name,product_name_vi,generic_name,brands,quantity,image_front_small_url';
+  // 1) Thực phẩm/đồ uống: Open Food Facts
+  let j=await fetchProductJson('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields='+encodeURIComponent(fields));
+  if(j&&j.status===1&&j.product){
+    const x=j.product;
+    const name=(x.product_name_vi||x.product_name||x.generic_name||'').trim();
+    if(name) return {name,brand:(x.brands||'').trim(),quantity:x.quantity||'',imageUrl:x.image_front_small_url||'',source:'Open Food Facts'};
+  }
+  // 2) Hàng phi thực phẩm nếu có trong Open Products Facts
+  j=await fetchProductJson('https://world.openproductsfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields='+encodeURIComponent(fields));
+  if(j&&j.status===1&&j.product){
+    const x=j.product;
+    const name=(x.product_name_vi||x.product_name||x.generic_name||'').trim();
+    if(name) return {name,brand:(x.brands||'').trim(),quantity:x.quantity||'',imageUrl:x.image_front_small_url||'',source:'Open Products Facts'};
+  }
+  return null;
+}
 async function handleBarcode(code){
   code=String(code||'').trim(); if(!code||scanBusy)return; scanBusy=true;
   document.getElementById('scanStatus').textContent='Đã nhận mã: '+code;
   await stopScanner();
-  document.getElementById('scannerModal').classList.remove('on');
   const p=data.products.find(x=>String(x.barcode||'').trim()===code);
   if(p){
+    document.getElementById('scannerModal').classList.remove('on');
     if(scanMode==='import'){fillImportProducts();document.getElementById('impProduct').value=p.id;syncImportPrice();document.getElementById('importModal').classList.add('on');toast('✅ Đã nhận: '+p.name)}
     else{addCart(p.id);go('sell');toast('✅ Đã quét: '+p.name)}
+    setTimeout(()=>scanBusy=false,700); return;
+  }
+  document.getElementById('scanStatus').textContent='🔎 Đang tra tên sản phẩm…';
+  const online=await lookupBarcodeOnline(code);
+  document.getElementById('scannerModal').classList.remove('on');
+  openNewProduct();
+  document.getElementById('newBarcode').value=code;
+  if(online){
+    const fullName=online.brand && !online.name.toLowerCase().includes(online.brand.toLowerCase()) ? (online.brand+' '+online.name) : online.name;
+    document.getElementById('newName').value=fullName;
+    document.getElementById('newBase').value=guessBaseUnit(fullName,online.quantity);
+    toast('✅ Tìm thấy: '+fullName+' — bạn nhập giá bán để lưu');
   }else{
-    openNewProduct();document.getElementById('newBarcode').value=code;toast('Mã mới — nhập tên và giá bán');
+    toast('Chưa có tên trong thư viện online — nhập tên 1 lần, lần sau app sẽ nhớ');
   }
   setTimeout(()=>scanBusy=false,700);
 }
