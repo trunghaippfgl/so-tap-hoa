@@ -1,23 +1,21 @@
 {
-  "name": "Sổ Tạp Hóa",
+  "name": "Sổ Tạp Hóa V1.1.3",
   "short_name": "Sổ Tạp Hóa",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#f4f7f3",
-  "theme_color": "#1f8f5f",
+  "background_color": "#f4f8f6",
+  "theme_color": "#0f5132",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ],
-  "description": "Quản lý bán hàng, kho, date và đối chiếu doanh thu đơn giản cho cửa hàng tạp hóa."
+  "description": "Fix quyền đồng bộ Cloud khi cập nhật kho; audit log bất biến."
 }

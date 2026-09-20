@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.1.2</title>
+<title>Sổ Tạp Hóa - MVP V1.1.3</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -78,7 +78,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.1.3 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -214,7 +214,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1.2</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1.3</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -862,7 +862,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.1.2 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.1.3 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -901,25 +901,76 @@ async function writeArray(ref,arr,prefix){
     await b.commit();
   }
 }
+
+async function writeAuditLogNewOnly(ref,arr){
+  arr=arr||[];
+  for(let i=0;i<arr.length;i+=100){
+    const chunk=arr.slice(i,i+100);
+    const checks=await Promise.all(chunk.map(async x=>{
+      const id=entityId(x,'A');
+      const snap=await ref.doc(id).get();
+      return {x,id,exists:snap.exists};
+    }));
+    const pending=checks.filter(x=>!x.exists);
+    if(!pending.length)continue;
+    const b=cloudDb.batch();
+    pending.forEach(({x,id})=>b.set(ref.doc(id),x));
+    await b.commit();
+  }
+}
+
 async function readArray(ref){const q=await ref.get();return q.docs.map(d=>({id:d.id,...d.data()}))}
 
 async function pushCloudData(){
   if(!cloudDb){setSyncStatus('Firestore chưa sẵn sàng',false);alert('Cloud chưa sẵn sàng. Kiểm tra kết nối mạng/Firebase.');return false}
   if(!currentUser){setSyncStatus('Chưa đăng nhập',false);alert('Bạn cần đăng nhập cửa hàng trước khi sao lưu Cloud.');openAuthSetup();return false}
   if(!currentStore.id){setSyncStatus('Không xác định được cửa hàng',false);alert('Không xác định được cửa hàng của tài khoản này.');return false}
+
+  let stage='khởi tạo';
   try{
     setSyncStatus('Đang sao lưu…');
     const r=storeDoc();
+
+    stage='thông tin cửa hàng';
     await r.set({name:currentStore.name||currentStore.id,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+
+    stage='sản phẩm';
     await writeArray(r.collection('products'),data.products,'P');
+
+    stage='bán hàng';
     await writeArray(r.collection('sales'),data.sales,'S');
+
+    stage='nhập hàng';
     await writeArray(r.collection('imports'),data.imports,'I');
+
+    stage='chốt ngày';
     await writeArray(r.collection('closeDays'),data.closeDays,'C');
+
+    stage='doanh thu ngoài';
     await writeArray(r.collection('externalRevenue'),data.externalRevenue,'E');
-    await writeArray(r.collection('auditLog'),data.auditLog,'A');
-    await r.collection('settings').doc('taxProfile').set(data.taxProfile||{},{merge:true});
-    cloudReady=true;setSyncStatus('Đã sao lưu Cloud lúc '+new Date().toLocaleTimeString('vi-VN'));toast('☁️ Đã sao lưu lên Cloud');return true;
-  }catch(e){console.warn(e);setSyncStatus('Sao lưu lỗi: '+e.message,false);alert('Sao lưu Cloud thất bại: '+e.message);return false}
+
+    // Audit log is immutable in Firestore Rules:
+    // only create entries that do not exist yet; never merge/update old logs.
+    stage='nhật ký hệ thống';
+    await writeAuditLogNewOnly(r.collection('auditLog'),data.auditLog);
+
+    // taxProfile is manager/owner-only in Rules. Staff should not rewrite it
+    // every time they merely edit stock or create a sale.
+    if(currentRole==='owner'||currentRole==='manager'){
+      stage='cấu hình thuế';
+      await r.collection('settings').doc('taxProfile').set(data.taxProfile||{},{merge:true});
+    }
+
+    cloudReady=true;
+    setSyncStatus('Đã sao lưu Cloud lúc '+new Date().toLocaleTimeString('vi-VN'));
+    toast('☁️ Đã sao lưu lên Cloud');
+    return true;
+  }catch(e){
+    console.warn('Cloud sync failed at',stage,e);
+    setSyncStatus('Sao lưu lỗi tại '+stage+': '+e.message,false);
+    alert('Sao lưu Cloud thất bại tại ['+stage+']: '+e.message);
+    return false;
+  }
 }
 
 async function migrateLegacyMainIfNeeded(r){
