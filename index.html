@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.1</title>
+<title>Sổ Tạp Hóa - MVP V1.1.2</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -214,7 +214,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1.2</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -288,12 +288,24 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <label>Mật khẩu ban đầu</label><input id="newUserPass" type="password" placeholder="Tối thiểu 6 ký tự">
 <label>Vai trò</label><select id="newUserRole"><option value="staff">Nhân viên bán hàng</option><option value="manager">Quản lý</option><option value="viewer">Chỉ xem</option></select>
 <button class="bigbtn" style="margin-top:12px" onclick="createStoreUser()">TẠO USER</button></div></div></div>
+<div id="accountRecoveryModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🔐 Hỗ trợ tài khoản</h2><button class="x" onclick="closeModal('accountRecoveryModal')">✕</button></div>
+<div class="card">
+<label>Bạn cần hỗ trợ</label><select id="recoveryIssue"><option value="forgot_username">Quên tên đăng nhập</option><option value="forgot_password">Quên mật khẩu</option></select>
+<label>Số điện thoại chủ cửa hàng *</label><input id="recoveryPhone" type="tel" placeholder="VD: 0905123456">
+<label>Tên cửa hàng</label><input id="recoveryStoreName" placeholder="VD: Tạp hóa Hải">
+<label>Ghi chú thêm</label><textarea id="recoveryNote" placeholder="Thông tin giúp Admin xác minh..."></textarea>
+<button class="bigbtn" onclick="submitRecoveryRequest()">GỬI YÊU CẦU HỖ TRỢ</button>
+<div id="recoveryStatus" class="taxnote" style="margin-top:8px"></div>
+</div></div></div>
+
 <div id="authSetupModal" class="modal"><div class="sheet">
 <div class="sheethead"><h2>🔐 Đăng nhập & Cửa hàng</h2><button class="x" onclick="closeModal('authSetupModal')">✕</button></div>
 <div class="card">
 <label>Tên đăng nhập</label><input id="authEmail" autocomplete="username" placeholder="VD: taphoahai hoặc 0905123456">
 <label>Mật khẩu</label><input id="authPass" type="password" autocomplete="current-password">
 <button class="bigbtn" style="margin-top:10px" onclick="doLogin()">ĐĂNG NHẬP</button>
+<button class="bigbtn secondary" style="margin-top:8px" onclick="closeModal('authSetupModal');setTimeout(openRecoveryModal,100)">❓ QUÊN TÊN ĐĂNG NHẬP / MẬT KHẨU</button>
 <button class="bigbtn secondary" style="margin-top:8px" onclick="closeModal('authSetupModal');setTimeout(openCreateStoreAccount,100)">🏪 TẠO USER CỬA HÀNG MỚI</button>
 <button class="bigbtn secondary" style="margin-top:8px" onclick="doLogout()">ĐĂNG XUẤT</button>
 <hr style="border:0;border-top:1px solid #e5ece8;margin:14px 0">
@@ -331,6 +343,7 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <div id="toast" class="toast"></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -343,10 +356,10 @@ const firebaseConfig={
   messagingSenderId:"146744756245",
   appId:"1:146744756245:web:03a4cc1117d3fb3ec5a61c"
 };
-let cloudDb=null,cloudAuth=null;
+let cloudDb=null,cloudAuth=null,cloudFn=null;
 try{
   if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  cloudDb=firebase.firestore();cloudAuth=firebase.auth();
+  cloudDb=firebase.firestore();cloudAuth=firebase.auth();cloudFn=firebase.functions();
 try{cloudDb.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('persistence',e.code||e.message))}
 catch(e){console.warn('persistence unavailable',e)}
 
@@ -660,6 +673,22 @@ function authInputToEmail(v){
   const x=String(v||'').trim().toLowerCase();
   return x.includes('@')?x:usernameToAuthEmail(x);
 }
+
+function openRecoveryModal(){
+  recoveryIssue.value='forgot_username';recoveryPhone.value='';recoveryStoreName.value='';recoveryNote.value='';recoveryStatus.textContent='';
+  accountRecoveryModal.classList.add('on');
+}
+async function submitRecoveryRequest(){
+  const phone=recoveryPhone.value.replace(/\D/g,'');
+  const storeName=recoveryStoreName.value.trim(),issue=recoveryIssue.value,note=recoveryNote.value.trim();
+  if(phone.length<9)return alert('Nhập số điện thoại chủ cửa hàng.');
+  if(!cloudFn)return alert('Dịch vụ hỗ trợ chưa sẵn sàng.');
+  recoveryStatus.textContent='Đang gửi yêu cầu...';
+  try{
+    const res=await cloudFn.httpsCallable('requestAccountRecovery')({phone,storeName,issue,note});
+    recoveryStatus.textContent='✅ '+(res.data.message||'Đã gửi yêu cầu. Admin sẽ liên hệ xác minh.');
+  }catch(e){recoveryStatus.textContent='⚠️ '+e.message}
+}
 function slugStoreName(s){
   return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()
     .replace(/Đ/g,'D').replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,18)||'CUAHANG';
@@ -691,9 +720,13 @@ async function createStoreAccount(){
     const uid=cred.user.uid;
 
     const sr=cloudDb.collection('stores').doc(storeId);
+    const subStart=new Date(),subEnd=new Date();subEnd.setFullYear(subEnd.getFullYear()+1);
     await sr.set({
       id:storeId,name:storeName,ownerUid:uid,ownerName,
       username,phone,address,status:'active',
+      subscriptionStatus:'active',
+      subscriptionStart:firebase.firestore.Timestamp.fromDate(subStart),
+      subscriptionEnd:firebase.firestore.Timestamp.fromDate(subEnd),
       createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -757,15 +790,32 @@ async function createStoreUser(){if(!canManageUsers())return alert('Chỉ Chủ 
 async function renderMembers(){const box=document.getElementById('memberList');if(!box)return;if(!currentUser||!currentStore.id){box.innerHTML='<div class="tiny muted">Đăng nhập và chọn cửa hàng để xem user.</div>';return}try{const s=await storeDoc().collection('members').get();const rows=s.docs.map(d=>d.data());box.innerHTML=rows.length?rows.map(m=>`<div class="member"><b>${escHtml(m.name||m.email)}</b><div class="tiny muted">${escHtml(m.email||'')} · ${m.role==='owner'?'Chủ cửa hàng':m.role==='manager'?'Quản lý':m.role==='viewer'?'Chỉ xem':'Nhân viên bán hàng'}</div></div>`).join(''):'<div class="tiny muted">Chưa có nhân viên.</div>'}catch(e){box.innerHTML='<div class="tiny muted">Không tải được user: '+escHtml(e.message)+'</div>'}}
 
 const STORE_KEY='soTapHoa_store_v10';
-let currentUser=null,currentStore={id:'',name:''},currentRole='',currentUsername='',cloudReady=false,syncTimer=null;
+let currentUser=null,currentStore={id:'',name:''},currentRole='',currentUsername='',cloudReady=false,syncTimer=null,currentLicense={status:'unknown',end:null,days:null};
 
 function roleLabel(r){return r==='owner'?'Chủ cửa hàng':r==='manager'?'Quản lý':r==='staff'?'Nhân viên bán hàng':r==='viewer'?'Chỉ xem':''}
 function canManageUsers(){return currentRole==='owner'||currentRole==='manager'}
-function canEditStoreData(){return currentRole==='owner'||currentRole==='manager'||currentRole==='staff'}
+function canEditStoreData(){return licenseCanWrite()&&(currentRole==='owner'||currentRole==='manager'||currentRole==='staff')}
 function setSyncStatus(msg,ok=true){const el=document.getElementById('productionSyncStatus');if(el)el.textContent=(ok?'✅ ':'⚠️ ')+msg}
 
 function openAuthSetup(){authEmail.value=currentUsername||'';authPass.value='';authSetupModal.classList.add('on')}
 
+
+function licenseStateFromStore(s){
+  const end=s.subscriptionEnd&&s.subscriptionEnd.toDate?s.subscriptionEnd.toDate():(s.subscriptionEnd?new Date(s.subscriptionEnd):null);
+  const days=end?Math.ceil((end-new Date())/86400000):null;
+  if(s.subscriptionStatus==='suspended')return {status:'suspended',end,days};
+  if(end&&days<0)return {status:'expired',end,days};
+  return {status:'active',end,days};
+}
+function licenseCanWrite(){return currentLicense.status==='active'}
+function showLicenseMessage(){
+  if(currentLicense.status==='expired')alert('Gói sử dụng của cửa hàng đã hết hạn. Vui lòng gia hạn để tiếp tục bán/nhập/chỉnh sửa.');
+  else if(currentLicense.status==='suspended')alert('Cửa hàng đang bị tạm khóa bởi quản trị hệ thống.');
+}
+async function writeHeartbeat(){
+  if(!cloudDb||!currentUser||!currentStore.id)return;
+  try{await cloudDb.collection('stores').doc(currentStore.id).set({lastActiveAt:firebase.firestore.FieldValue.serverTimestamp(),lastActiveUid:currentUser.uid},{merge:true})}catch(e){console.warn('heartbeat',e)}
+}
 async function resolveStoreForUser(uid){
   const us=await cloudDb.collection('users').doc(uid).get();
   if(!us.exists)return false;
@@ -777,7 +827,9 @@ async function resolveStoreForUser(uid){
   const st=ss.data()||{};
   currentStore={id:u.storeId,name:st.name||u.storeId};
   currentRole=u.role||'staff';currentUsername=u.username||'';
+  currentLicense=licenseStateFromStore(st);
   localStorage.setItem(STORE_KEY,JSON.stringify(currentStore));
+  setTimeout(writeHeartbeat,200);
   return true;
 }
 
@@ -810,12 +862,12 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.1 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.1.2 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
   authStoreStatus.textContent=currentStore.id?((currentStore.name||currentStore.id)+' · '+currentStore.id):'Chưa chọn cửa hàng';
-  const rs=document.getElementById('authRoleStatus');if(rs)rs.textContent=currentRole?('Quyền: '+roleLabel(currentRole)):'';
+  const rs=document.getElementById('authRoleStatus');if(rs)rs.textContent=currentRole?('Quyền: '+roleLabel(currentRole)+(currentLicense.status==='active'?(currentLicense.days!==null?' · Còn '+currentLicense.days+' ngày':''):(currentLicense.status==='expired'?' · HẾT HẠN':' · TẠM KHÓA'))):'';
   const info=document.getElementById('currentStoreInfo');
   if(info)info.innerHTML=currentStore.id?'<b>'+escHtml(currentStore.name||currentStore.id)+'</b><br>Mã cửa hàng: '+escHtml(currentStore.id)+'<br>User: '+escHtml(currentUsername||'')+'<br>Quyền: '+escHtml(roleLabel(currentRole)):'Chưa đăng nhập cửa hàng.';
   showStoreOnboardingIfNeeded();
@@ -836,7 +888,7 @@ if(cloudAuth){
 function storeDoc(){return (!cloudDb||!currentStore.id)?null:cloudDb.collection('stores').doc(currentStore.id)}
 function dayLocked(date){return (data.closeDays||[]).some(x=>x.date===date&&x.locked===true)}
 function assertDayUnlocked(date){
-  if(!canEditStoreData()){alert('Tài khoản này không có quyền chỉnh sửa dữ liệu.');return false}
+  if(!licenseCanWrite()){showLicenseMessage();return false}if(!canEditStoreData()){alert('Tài khoản này không có quyền chỉnh sửa dữ liệu.');return false}
   if(dayLocked(date)){alert('Ngày '+date+' đã khóa sổ.');return false}
   return true;
 }
