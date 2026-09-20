@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.0.4</title>
+<title>Sổ Tạp Hóa - MVP V1.1</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -115,10 +115,22 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 </section>
 
 <section id="stock" class="screen">
-<div class="card"><div class="sectiontitle"><h2>☁️ Danh mục sản phẩm Cloud</h2></div>
-<div class="tiny muted">Đồng bộ sẽ đưa sản phẩm đã có trên Cloud về Kho cửa hàng. Sản phẩm mới có tên/barcode/thương hiệu/đơn vị; giá bán, giá vốn và tồn kho mặc định bằng 0 để cửa hàng tự nhập.</div>
-<button class="bigbtn secondary" style="margin-top:10px" onclick="syncEverythingFromCloud()">🔄 ĐỒNG BỘ CLOUD → KHO CỬA HÀNG</button>
-<div id="cloudCatalogStatus" class="cloud-status">Chưa đồng bộ trong phiên này.</div></div>
+<div class="card">
+  <div class="sectiontitle"><h2>☁️ Gợi ý sản phẩm từ Cloud</h2></div>
+  <div class="tiny muted">Cloud không tự đổ toàn bộ sản phẩm vào kho nữa. App sẽ tìm sản phẩm cửa hàng chưa có, cho phép lọc/chọn hàng loạt rồi mới thêm vào Kho.</div>
+  <div class="grid2" style="margin-top:10px">
+    <button class="bigbtn secondary" onclick="loadCloudSuggestions()">🔄 TẢI GỢI Ý CLOUD</button>
+    <button class="bigbtn secondary" onclick="openCloudSuggestions()">📋 XEM GỢI Ý</button>
+  </div>
+  <div id="cloudCatalogStatus" class="cloud-status">Chưa tải gợi ý trong phiên này.</div>
+</div>
+
+<div class="card">
+  <div class="sectiontitle"><h2>⬆️ Đóng góp dữ liệu lên Cloud</h2></div>
+  <div class="tiny muted">Gửi các sản phẩm cửa hàng đang có nhưng Cloud chưa biết. Hệ thống sẽ kiểm tra trùng barcode/tên/thương hiệu/quy cách trước khi đưa vào hàng chờ xác minh.</div>
+  <button class="bigbtn secondary" style="margin-top:10px" onclick="contributeStoreProducts()">⬆️ GỬI SẢN PHẨM THIẾU LÊN CLOUD</button>
+  <div id="cloudContributionStatus" class="cloud-status">Chưa gửi dữ liệu trong phiên này.</div>
+</div>
   <div class="sectiontitle"><h2>🏪 Kho & Date</h2><button class="circle" onclick="openImport()">＋</button></div>
   <div class="grid2"><div class="card"><div class="label">Giá trị tồn</div><div id="stockValue" class="kpi" style="font-size:20px">0đ</div></div><div class="card"><div class="label">Sắp hết hàng</div><div id="lowCount" class="kpi" style="font-size:20px">0</div></div></div>
   <div class="card"><label>Tìm sản phẩm</label><input id="stockSearch" placeholder="Tên hàng hoặc barcode..." oninput="renderStock()"><div id="stockList"></div></div>
@@ -184,7 +196,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><div class="sectiontitle"><h2>☁️ Trạng thái hệ thống</h2></div>
 <div id="productionSyncStatus" class="cloud-status">Đang kiểm tra Cloud…</div>
 <div id="cloudDiag" class="tiny muted" style="margin-top:6px">Cloud là nguồn dữ liệu chính. Đồng bộ sẽ tải lại dữ liệu của đúng cửa hàng đang đăng nhập.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="syncEverythingFromCloud()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ SAO LƯU</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ SAO LƯU</button></div></div>
 
 <div class="card">
   <div class="sectiontitle"><h2>🏪 Cửa hàng hiện tại</h2></div>
@@ -198,11 +210,11 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div id="memberList" style="margin-top:8px"></div></div>
 <div class="card"><div class="sectiontitle"><h2>☁️ Production</h2></div>
 <div class="taxnote">Đăng nhập + storeId để đồng bộ bán hàng, tồn kho, chốt ngày, nhật ký và hồ sơ thuế lên Firestore.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="syncEverythingFromCloud()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ ĐẨY LÊN CLOUD</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ ĐẨY LÊN CLOUD</button></div></div>
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.0.4</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -212,6 +224,24 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <button class="nav" data-nav="tax" onclick="go('tax')"><b>🧾</b>Đối chiếu</button>
 <button class="nav" data-nav="more" onclick="go('more')"><b>⚙️</b>Thêm</button>
 </nav></div>
+
+<div id="cloudSuggestionModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>☁️ Sản phẩm gợi ý từ Cloud</h2><button class="x" onclick="closeModal('cloudSuggestionModal')">✕</button></div>
+<div class="card">
+<label>Tìm sản phẩm / thương hiệu / barcode</label>
+<input id="cloudSuggestSearch" placeholder="VD: Vinamilk, Coca, 893..." oninput="renderCloudSuggestions()">
+<label>Nhóm hàng</label>
+<select id="cloudSuggestCategory" onchange="renderCloudSuggestions()"><option value="">Tất cả nhóm hàng</option></select>
+<label>Thương hiệu</label>
+<select id="cloudSuggestBrand" onchange="renderCloudSuggestions()"><option value="">Tất cả thương hiệu</option></select>
+<div class="grid2" style="margin-top:10px">
+<button class="bigbtn secondary" onclick="selectAllCloudSuggestions(true)">✓ CHỌN TẤT CẢ HIỂN THỊ</button>
+<button class="bigbtn secondary" onclick="selectAllCloudSuggestions(false)">BỎ CHỌN</button>
+</div>
+<div id="cloudSuggestionStats" class="cloud-status" style="margin-top:10px"></div>
+<div id="cloudSuggestionList" style="margin-top:10px"></div>
+<button class="bigbtn" style="margin-top:12px" onclick="addSelectedCloudSuggestionsToStore()">＋ THÊM ĐÃ CHỌN VÀO KHO</button>
+</div></div></div>
 
 <div id="importModal" class="modal"><div class="sheet"><div class="sheethead"><h2>📦 Nhập hàng siêu nhanh</h2><button class="x" onclick="closeModal('importModal')">✕</button></div>
 <div class="card"><button class="bigbtn blue" onclick="openScanner('import')">📷 QUÉT BARCODE SẢN PHẨM</button></div>
@@ -327,88 +357,253 @@ catch(e){console.warn('persistence unavailable',e)}
 function loadCloudCatalogCache(){try{cloudCatalogCache=JSON.parse(localStorage.getItem(CLOUD_CATALOG_KEY)||'{}')||{}}catch(e){cloudCatalogCache={}}}
 function saveCloudCatalogCache(){localStorage.setItem(CLOUD_CATALOG_KEY,JSON.stringify(cloudCatalogCache))}
 
-async function syncEverythingFromCloud(){
-  const box=document.getElementById('cloudCatalogStatus');
-  if(box)box.textContent='Đang đồng bộ dữ liệu cửa hàng và danh mục sản phẩm…';
-  const storeOk=await pullCloudData();
-  if(storeOk===false)return false;
-  const result=await refreshCloudCatalog();
-  renderAll();
-  return !result.error;
+
+let cloudSuggestionPool=[];
+let cloudSuggestionSelected=new Set();
+
+function normText(v){
+  return String(v||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/g,'d')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ').trim();
 }
+function canonicalFingerprint(x){
+  return [
+    normText(x.name),
+    normText(x.brand),
+    normText(x.size||x.volume||x.weight),
+    normText(x.unit||x.base)
+  ].join('|');
+}
+function storeHasCloudProduct(c,barcode){
+  if(barcode && data.products.some(p=>String(p.barcode||'').trim()===barcode)) return true;
+  const fp=canonicalFingerprint(c);
+  if(!fp.replace(/\|/g,'')) return false;
+  return data.products.some(p=>canonicalFingerprint(p)===fp);
+}
+
 async function refreshCloudCatalog(){
+  if(!cloudDb)return alert('Firestore chưa sẵn sàng.');
   const box=document.getElementById('cloudCatalogStatus');
-  if(!cloudDb){if(box)box.textContent='⚠️ Firestore chưa sẵn sàng.';alert('Cloud chưa sẵn sàng.');return {total:0,added:0,updated:0}}
-  if(!currentUser||!currentStore.id){if(box)box.textContent='⚠️ Hãy đăng nhập cửa hàng trước.';alert('Bạn cần đăng nhập cửa hàng trước khi đồng bộ danh mục Cloud.');return {total:0,added:0,updated:0}}
-  if(box)box.textContent='Đang tải danh mục sản phẩm Cloud…';
-
+  if(box)box.textContent='Đang tải danh mục Cloud…';
   try{
-    const snap=await cloudDb.collection('products').limit(2000).get();
+    const snap=await cloudDb.collection('products').limit(5000).get();
     const next={};
-    let added=0,updated=0,skipped=0;
-
-    snap.forEach(doc=>{
-      const c=doc.data()||{};
-      const barcode=String(c.barcode||doc.id||'').trim();
-      if(!barcode||!c.name){skipped++;return}
-
-      next[barcode]=c;
-      let p=data.products.find(x=>String(x.barcode||'')===barcode);
-
-      if(p){
-        // Chỉ bổ sung thông tin danh mục. Không ghi đè giá/tồn của cửa hàng.
-        if(c.name && (!p.name || p.cloudSource)) p.name=c.name;
-        if(c.brand) p.brand=c.brand;
-        if(c.category) p.category=c.category;
-        if(c.size) p.size=c.size;
-        if(c.unit||c.base) p.base=c.unit||c.base||p.base||'cái';
-        if(c.caseSize) p.caseSize=c.caseSize;
-        if(c.imageUrl||c.photoURL||c.image) p.imageUrl=c.imageUrl||c.photoURL||c.image;
-        p.cloudSource=true;
-        p.cloudUpdatedAt=Date.now();
-        updated++;
-      }else{
-        const base=c.unit||c.base||'cái';
-        data.products.push({
-          id:'CLOUD-'+barcode,
-          barcode,
-          name:c.name,
-          brand:c.brand||'',
-          category:c.category||'',
-          size:c.size||'',
-          base,
-          caseName:c.caseName||'',
-          caseSize:Number(c.caseSize)||1,
-          stock:0,
-          cost:0,
-          price:0,
-          expiry:'',
-          imageUrl:c.imageUrl||c.photoURL||c.image||'',
-          cloudSource:true,
-          createdAt:Date.now(),
-          cloudUpdatedAt:Date.now()
-        });
-        added++;
-      }
+    snap.forEach(d=>{
+      const x=d.data()||{};
+      const barcode=String(x.barcode||d.id||'').trim();
+      next[barcode||d.id]={...x,_docId:d.id,barcode};
     });
-
     cloudCatalogCache=next;
     saveCloudCatalogCache();
-
-    // Lưu local và đẩy ngay kho cửa hàng lên Cloud production.
-    addAudit('cloud_catalog_synced','Đồng bộ danh mục Cloud: thêm '+added+' · cập nhật '+updated+' · tổng '+Object.keys(next).length);
-    save();
-
-    if(box)box.textContent='✅ Cloud: '+Object.keys(next).length+' sản phẩm · Thêm mới vào kho: '+added+' · Cập nhật: '+updated+(skipped?' · Bỏ qua: '+skipped:'');
-    toast('☁️ Đã đưa '+added+' sản phẩm mới từ Cloud vào Kho cửa hàng');
-    return {total:Object.keys(next).length,added,updated,skipped};
+    if(box)box.textContent='✅ Đã tải '+Object.keys(next).length+' sản phẩm Cloud.';
+    return next;
   }catch(e){
-    console.warn('Cloud catalog sync failed',e);
-    if(box)box.textContent='⚠️ Không đồng bộ được: '+e.message;
-    alert('Đồng bộ danh mục Cloud thất bại: '+e.message);
-    return {total:0,added:0,updated:0,error:e};
+    if(box)box.textContent='⚠️ Không tải được Cloud: '+e.message;
+    throw e;
   }
 }
+
+async function loadCloudSuggestions(){
+  if(!currentUser||!currentStore.id){alert('Bạn cần đăng nhập cửa hàng trước.');return}
+  try{
+    const catalog=await refreshCloudCatalog();
+    cloudSuggestionPool=[];
+    let cloudCount=0,existing=0;
+    Object.values(catalog).forEach(c=>{
+      cloudCount++;
+      const barcode=String(c.barcode||'').trim();
+      if(!c.name)return;
+      if(storeHasCloudProduct(c,barcode)){existing++;return}
+      cloudSuggestionPool.push({
+        ...c,
+        barcode,
+        _key:barcode||c._docId||('C'+cloudSuggestionPool.length)
+      });
+    });
+    cloudSuggestionSelected=new Set();
+    fillCloudSuggestionFilters();
+    renderCloudSuggestions();
+    const box=document.getElementById('cloudCatalogStatus');
+    if(box)box.textContent='✅ Cloud '+cloudCount+' SP · Kho đã có '+existing+' · Gợi ý mới '+cloudSuggestionPool.length;
+    toast('☁️ Có '+cloudSuggestionPool.length+' sản phẩm gợi ý mới');
+    openCloudSuggestions();
+  }catch(e){
+    alert('Không tải được gợi ý Cloud: '+e.message);
+  }
+}
+
+function openCloudSuggestions(){
+  if(!cloudSuggestionPool.length){
+    loadCloudSuggestions();
+    return;
+  }
+  cloudSuggestionModal.classList.add('on');
+  renderCloudSuggestions();
+}
+
+function fillCloudSuggestionFilters(){
+  const cats=[...new Set(cloudSuggestionPool.map(x=>x.category).filter(Boolean))].sort();
+  const brands=[...new Set(cloudSuggestionPool.map(x=>x.brand).filter(Boolean))].sort();
+  cloudSuggestCategory.innerHTML='<option value="">Tất cả nhóm hàng</option>'+cats.map(x=>'<option>'+escHtml(x)+'</option>').join('');
+  cloudSuggestBrand.innerHTML='<option value="">Tất cả thương hiệu</option>'+brands.map(x=>'<option>'+escHtml(x)+'</option>').join('');
+}
+
+function getVisibleCloudSuggestions(){
+  const q=normText(cloudSuggestSearch.value);
+  const cat=cloudSuggestCategory.value;
+  const brand=cloudSuggestBrand.value;
+  return cloudSuggestionPool.filter(x=>{
+    if(cat && x.category!==cat)return false;
+    if(brand && x.brand!==brand)return false;
+    if(q){
+      const hay=normText([x.name,x.brand,x.category,x.barcode,x.size,x.unit||x.base].join(' '));
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+}
+
+function renderCloudSuggestions(){
+  const rows=getVisibleCloudSuggestions();
+  cloudSuggestionStats.textContent='Hiển thị '+rows.length+' / '+cloudSuggestionPool.length+' · Đã chọn '+cloudSuggestionSelected.size;
+  cloudSuggestionList.innerHTML=rows.length?rows.map(x=>`
+    <label class="product" style="display:flex;gap:10px;align-items:flex-start">
+      <input type="checkbox" style="width:22px;height:22px;margin-top:4px" ${cloudSuggestionSelected.has(x._key)?'checked':''}
+        onchange="toggleCloudSuggestion('${String(x._key).replace(/'/g,"\\'")}',this.checked)">
+      <div style="flex:1">
+        <div class="name">${escHtml(x.name)}</div>
+        <div class="tiny muted">${escHtml(x.brand||'')} ${x.size?'· '+escHtml(x.size):''} ${x.category?'· '+escHtml(x.category):''}</div>
+        <div class="tiny muted">${x.barcode?'Barcode: '+escHtml(x.barcode):'Không barcode'}</div>
+      </div>
+    </label>`).join(''):'<div class="tiny muted">Không có sản phẩm phù hợp bộ lọc.</div>';
+}
+
+function toggleCloudSuggestion(key,on){
+  if(on)cloudSuggestionSelected.add(key);else cloudSuggestionSelected.delete(key);
+  renderCloudSuggestions();
+}
+
+function selectAllCloudSuggestions(on){
+  getVisibleCloudSuggestions().forEach(x=>on?cloudSuggestionSelected.add(x._key):cloudSuggestionSelected.delete(x._key));
+  renderCloudSuggestions();
+}
+
+async function addSelectedCloudSuggestionsToStore(){
+  if(!canEditStoreData())return alert('Bạn không có quyền thêm sản phẩm vào kho.');
+  const chosen=cloudSuggestionPool.filter(x=>cloudSuggestionSelected.has(x._key));
+  if(!chosen.length)return alert('Bạn chưa chọn sản phẩm nào.');
+
+  let added=0;
+  chosen.forEach(c=>{
+    const barcode=String(c.barcode||'').trim();
+    if(storeHasCloudProduct(c,barcode))return;
+    data.products.push({
+      id:'CLOUD-'+(barcode||Date.now()+'-'+added),
+      barcode,
+      name:c.name,
+      brand:c.brand||'',
+      category:c.category||'',
+      size:c.size||c.volume||c.weight||'',
+      base:c.unit||c.base||'cái',
+      caseName:c.caseName||'',
+      caseSize:Number(c.caseSize)||1,
+      stock:0,cost:0,price:0,expiry:'',
+      imageUrl:c.imageUrl||c.photoURL||c.image||'',
+      cloudSource:true,
+      canonicalId:c._docId||barcode||'',
+      createdAt:Date.now()
+    });
+    added++;
+  });
+
+  addAudit('cloud_suggestions_added','Thêm '+added+' sản phẩm gợi ý Cloud vào kho');
+  save();
+  cloudSuggestionPool=cloudSuggestionPool.filter(x=>!cloudSuggestionSelected.has(x._key));
+  cloudSuggestionSelected=new Set();
+  fillCloudSuggestionFilters();
+  renderCloudSuggestions();
+  renderAll();
+  closeModal('cloudSuggestionModal');
+  toast('✅ Đã thêm '+added+' sản phẩm vào Kho');
+}
+
+async function contributeStoreProducts(){
+  if(!currentUser||!currentStore.id)return alert('Bạn cần đăng nhập cửa hàng.');
+  if(!cloudDb)return alert('Cloud chưa sẵn sàng.');
+  const box=document.getElementById('cloudContributionStatus');
+  if(box)box.textContent='Đang kiểm tra sản phẩm cửa hàng…';
+
+  try{
+    const catalog=await refreshCloudCatalog();
+    const byBarcode={};
+    const byFp={};
+    Object.values(catalog).forEach(c=>{
+      const b=String(c.barcode||'').trim();
+      if(b)byBarcode[b]=c;
+      const fp=canonicalFingerprint(c);
+      if(fp.replace(/\|/g,''))byFp[fp]=c;
+    });
+
+    let submitted=0,duplicate=0,skipped=0;
+    const batchItems=[];
+
+    for(const p of data.products||[]){
+      if(!p.name){skipped++;continue}
+      const barcode=String(p.barcode||'').trim();
+      const fp=canonicalFingerprint(p);
+
+      // Exact barcode duplicate or exact normalized fingerprint => do not create another canonical product.
+      const exact=barcode&&byBarcode[barcode];
+      const near=byFp[fp];
+
+      if(exact||near){
+        duplicate++;
+        continue;
+      }
+
+      batchItems.push({
+        barcode,
+        name:p.name,
+        normalizedName:normText(p.name),
+        brand:p.brand||'',
+        normalizedBrand:normText(p.brand),
+        category:p.category||'',
+        size:p.size||'',
+        unit:p.base||'cái',
+        caseSize:Number(p.caseSize)||1,
+        imageUrl:p.imageUrl||'',
+        fingerprint:fp,
+        sourceType:'store_contribution',
+        sourceStoreId:currentStore.id,
+        submittedBy:currentUser.uid,
+        status:'pending',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    for(let i=0;i<batchItems.length;i+=300){
+      const b=cloudDb.batch();
+      batchItems.slice(i,i+300).forEach(x=>{
+        const id=cloudDb.collection('productSubmissions').doc().id;
+        b.set(cloudDb.collection('productSubmissions').doc(id),x);
+      });
+      await b.commit();
+      submitted+=batchItems.slice(i,i+300).length;
+    }
+
+    if(box)box.textContent='✅ Gửi mới '+submitted+' · Trùng bỏ qua '+duplicate+' · Bỏ qua '+skipped;
+    addAudit('cloud_products_contributed','Đóng góp '+submitted+' sản phẩm lên Cloud · trùng '+duplicate);
+    save();
+    toast('⬆️ Đã gửi '+submitted+' sản phẩm vào hàng chờ xác minh');
+  }catch(e){
+    console.warn(e);
+    if(box)box.textContent='⚠️ Gửi Cloud lỗi: '+e.message;
+    alert('Không gửi được sản phẩm lên Cloud: '+e.message);
+  }
+}
+
 async function lookupCloudProduct(code){
   const key=String(code);
   if(cloudCatalogCache[key]&&cloudCatalogCache[key].name)return cloudCatalogCache[key];
@@ -615,7 +810,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.0.4 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.1 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
