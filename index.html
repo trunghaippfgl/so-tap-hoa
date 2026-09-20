@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V0.6.1</title>
+<title>Sổ Tạp Hóa - MVP V0.6.2</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -48,6 +48,9 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 .member{padding:10px 0;border-bottom:1px solid #e6eee9}.member:last-child{border-bottom:0}
 .stock-edit{cursor:pointer}.cloud-status{padding:9px 10px;border-radius:10px;background:#eef7f2;color:#315e4c;font-size:12px;margin-top:8px}
 .cam-status{padding:8px 10px;border-radius:10px;background:#f7f9f8;color:#54675e;font-size:12px;margin-top:8px}
+
+.sale-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.no-code-note{font-size:12px;color:#687a72;line-height:1.45;margin-top:8px}
 </style>
 </head>
 <body><div class="app">
@@ -71,13 +74,23 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 </section>
 
 <section id="sell" class="screen">
-  <div class="sectiontitle"><h2>🛒 Bán hàng</h2><span class="pill">3 bước</span></div>
-  <div class="card"><button class="bigbtn blue" onclick="openScanner('sell')">📷 QUÉT BARCODE THẬT</button><button class="bigbtn secondary" style="margin-top:8px" onclick="openNewProduct()">＋ HÀNG MỚI</button><div class="tiny muted" style="margin-top:8px;text-align:center">Cho phép Camera khi điện thoại hỏi quyền truy cập.</div></div>
+  <div class="sectiontitle"><h2>🛒 Bán hàng</h2><span class="pill">Quét · Chọn · Tính tiền</span></div>
   <div class="card">
-    <label>Tìm nhanh sản phẩm</label><input id="sellSearch" placeholder="VD: Coca, sữa, mì..." oninput="renderSellProducts()">
+    <div class="sale-actions">
+      <button class="bigbtn blue" onclick="openScanner('sell')">📷 QUÉT MÃ HÀNG</button>
+      <button class="bigbtn secondary" onclick="openNoBarcodeProduct()">＋ HÀNG KHÔNG MÃ</button>
+    </div>
+    <div class="no-code-note">Hàng không có barcode như rau, bánh nhà làm, hàng chia lẻ… có thể nhập nhanh rồi bán ngay.</div>
+  </div>
+  <div class="card">
+    <label>Tìm/chọn sản phẩm</label><input id="sellSearch" placeholder="VD: Coca, sữa, mì, rau..." oninput="renderSellProducts()">
     <div id="sellProducts"></div>
   </div>
-  <div class="card"><div class="sectiontitle"><h2>Giỏ hàng</h2><b id="cartCount">0 món</b></div><div id="cart"></div><div class="product"><div class="name">TỔNG TIỀN</div><div id="cartTotal" class="kpi">0đ</div></div></div>
+  <div class="card">
+    <div class="sectiontitle"><h2>🧺 Giỏ hàng</h2><b id="cartCount">0 món</b></div>
+    <div id="cart"></div>
+    <div class="product"><div class="name">TỔNG TIỀN</div><div id="cartTotal" class="kpi">0đ</div></div>
+  </div>
   <div class="grid2"><button class="bigbtn" onclick="checkout('cash')">💵 TIỀN MẶT</button><button class="bigbtn blue" onclick="checkout('bank')">📱 CHUYỂN KHOẢN</button></div>
 </section>
 
@@ -158,7 +171,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" onclick="loadDemo()">🧪 Nạp lại dữ liệu mẫu</button><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.6.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.6.2</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -173,6 +186,16 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><button class="bigbtn blue" onclick="openScanner('import')">📷 QUÉT BARCODE SẢN PHẨM</button></div>
 <div class="card"><label>Sản phẩm</label><select id="impProduct"></select><div class="row"><div><label>Số lượng</label><input id="impQty" type="number" value="1" min="1"></div><div><label>Đơn vị</label><select id="impUnit"><option value="base">Đơn vị lẻ</option><option value="case">Thùng/Lốc</option></select></div></div><label>Giá nhập / đơn vị đã chọn</label><input id="impCost" type="number" inputmode="numeric"><label>Hạn sử dụng (nếu có)</label><input id="impExpiry" type="date"><button class="bigbtn" style="margin-top:14px" onclick="saveImport()">LƯU NHẬP HÀNG</button></div></div></div>
 
+<div id="noBarcodeModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>＋ Hàng không có mã</h2><button class="x" onclick="closeModal('noBarcodeModal')">✕</button></div>
+<div class="card">
+<label>Tên sản phẩm *</label><input id="nbName" placeholder="VD: Rau cải bó, bánh nhà làm...">
+<div class="row"><div><label>Giá bán *</label><input id="nbPrice" type="number" inputmode="numeric"></div><div><label>Giá vốn</label><input id="nbCost" type="number" inputmode="numeric"></div></div>
+<div class="row"><div><label>Tồn ban đầu</label><input id="nbStock" type="number" value="1" min="0"></div><div><label>Đơn vị</label><select id="nbBase"><option>cái</option><option>gói</option><option>chai</option><option>lon</option><option>hộp</option><option>kg</option><option>bó</option><option>túi</option></select></div></div>
+<label>Nhóm hàng</label><input id="nbCategory" placeholder="VD: Rau củ, bánh, hàng chia lẻ...">
+<label>Hạn sử dụng (nếu có)</label><input id="nbExpiry" type="date">
+<button class="bigbtn" style="margin-top:12px" onclick="saveNoBarcodeProduct()">LƯU & THÊM VÀO GIỎ</button>
+</div></div></div>
 <div id="editStockModal" class="modal"><div class="sheet">
 <div class="sheethead"><h2>✏️ Sửa hàng trong kho</h2><button class="x" onclick="closeModal('editStockModal')">✕</button></div>
 <div class="card"><input id="editProductId" type="hidden">
@@ -341,11 +364,28 @@ function monthRevenue(){const m=today().slice(0,7);return data.sales.filter(s=>!
 function addAudit(type,details){data.auditLog.unshift({id:'A'+Date.now()+Math.random().toString(36).slice(2,5),type,details,createdAt:Date.now()});if(data.auditLog.length>500)data.auditLog=data.auditLog.slice(0,500)}
 
 function renderHome(){document.getElementById('todayRevenue').textContent=money(revenue());let tasks=[];let yr=yearRevenue();if(yr>1000000000)tasks.push(`<div class="alert red"><div>🧾</div><div><b>Doanh thu năm đã vượt 1 tỷ</b><small>Vào Doanh thu & Thuế để kiểm tra nghĩa vụ.</small></div></div>`);else if(yr>=950000000)tasks.push(`<div class="alert red"><div>🧾</div><div><b>Doanh thu năm đang rất gần 1 tỷ</b><small>Đối chiếu toàn bộ doanh thu ngoài app.</small></div></div>`);else if(yr>=900000000)tasks.push(`<div class="alert"><div>🧾</div><div><b>Doanh thu năm đã trên 900 triệu</b><small>Nên rà soát số liệu thường xuyên.</small></div></div>`);let low=data.products.filter(p=>p.stock<=5);let exp=data.products.filter(p=>{let d=daysLeft(p.expiry);return d!==null&&d<=30}); if(low.length)tasks.push(`<div class="alert red"><div>📉</div><div><b>${low.length} mặt hàng sắp/hết</b><small>Bấm Kho để kiểm tra ngay</small></div></div>`); if(exp.length)tasks.push(`<div class="alert"><div>⏳</div><div><b>${exp.length} mặt hàng sắp hết date</b><small>${exp.slice(0,2).map(p=>p.name).join(', ')}</small></div></div>`); if(!tasks.length)tasks.push(`<div class="alert green"><div>✅</div><div><b>Chưa có việc gấp</b><small>Cửa hàng đang ổn</small></div></div>`);document.getElementById('todayTasks').innerHTML=tasks.join('');let status=(low.length||exp.some(p=>daysLeft(p.expiry)<=7))?'🟡 CẦN CHÚ Ý':'🟢 CỬA HÀNG ỔN';document.getElementById('storeStatus').textContent=status}
-function renderSellProducts(){let q=(document.getElementById('sellSearch').value||'').toLowerCase();let arr=data.products.filter(p=>p.name.toLowerCase().includes(q)).slice(0,8);document.getElementById('sellProducts').innerHTML=arr.map(p=>`<div class="product"><div><div class="name">${p.name}</div><small>Còn ${p.stock} ${p.base} · ${money(p.price)}</small></div><button class="circle" onclick="addCart('${p.id}')">＋</button></div>`).join('')}
+
+function openNoBarcodeProduct(){
+  if(!assertDayUnlocked(today()))return;
+  nbName.value='';nbPrice.value='';nbCost.value='';nbStock.value='1';nbBase.value='cái';nbCategory.value='';nbExpiry.value='';
+  noBarcodeModal.classList.add('on');
+}
+function saveNoBarcodeProduct(){
+  const name=nbName.value.trim(),price=Math.max(0,Number(nbPrice.value)||0),stock=Math.max(0,Number(nbStock.value)||0);
+  if(!name||price<=0)return alert('Cần tên sản phẩm và giá bán.');
+  const p={id:'p'+Date.now(),barcode:'',name,base:nbBase.value||'cái',caseName:'',caseSize:1,stock,cost:Math.max(0,Number(nbCost.value)||0),price,expiry:nbExpiry.value||'',brand:'',category:nbCategory.value.trim(),noBarcode:true,createdAt:Date.now()};
+  data.products.unshift(p);
+  addAudit('product_created_no_barcode','Tạo hàng không mã '+name+' · giá '+money(price)+' · tồn '+stock);
+  save();
+  closeModal('noBarcodeModal');
+  if(stock>0){addCart(p.id);go('sell');toast('✅ Đã thêm hàng không mã vào giỏ')}
+  else{go('sell');toast('✅ Đã tạo hàng không mã; tồn đang bằng 0')}
+}
+function renderSellProducts(){let q=(document.getElementById('sellSearch').value||'').toLowerCase();let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q)).slice(0,20);document.getElementById('sellProducts').innerHTML=arr.map(p=>`<div class="product"><div><div class="name">${escHtml(p.name)}</div><small>${p.barcode?escHtml(p.barcode)+' · ':''}Còn ${p.stock} ${escHtml(p.base)} · ${money(p.price)}${p.noBarcode?' · Không mã':''}</small></div><button class="circle" onclick="addCart('${p.id}')">＋</button></div>`).join('')||'<div class="muted tiny">Không tìm thấy sản phẩm.</div>'}
 function addCart(id){let p=data.products.find(x=>x.id===id);if(!p||p.stock<=0)return toast('Mặt hàng đã hết');cart[id]=(cart[id]||0)+1;if(cart[id]>p.stock)cart[id]=p.stock;renderCart()}
 function renderCart(){let ids=Object.keys(cart).filter(id=>cart[id]>0);let total=0,count=0;document.getElementById('cart').innerHTML=ids.map(id=>{let p=data.products.find(x=>x.id===id),q=cart[id],sub=p.price*q;total+=sub;count+=q;return `<div class="product"><div><div class="name">${p.name}</div><small>${money(p.price)} × ${q}</small></div><div class="qtyctrl"><button class="circle" onclick="chgCart('${id}',-1)">−</button><b>${q}</b><button class="circle" onclick="chgCart('${id}',1)">＋</button></div></div>`}).join('')||'<div class="muted tiny">Chưa có sản phẩm.</div>';document.getElementById('cartTotal').textContent=money(total);document.getElementById('cartCount').textContent=count+' món'}
 function chgCart(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];let p=data.products.find(x=>x.id===id);if(cart[id]>p.stock)cart[id]=p.stock;renderCart()}
-function checkout(method){if(!assertDayUnlocked(today()))return;let ids=Object.keys(cart);if(!ids.length)return toast('Giỏ hàng đang trống');let total=0,items=[];for(let id of ids){let p=data.products.find(x=>x.id===id),q=cart[id];if(q>p.stock)return toast('Tồn kho không đủ: '+p.name);p.stock-=q;total+=p.price*q;items.push({productId:id,name:p.name,qty:q,price:p.price})}let sale={id:'S'+Date.now(),date:today(),method,total,items,createdAt:Date.now()};data.sales.push(sale);addAudit('sale_created','Tạo giao dịch '+sale.id+' · '+money(total)+' · '+(method==='cash'?'Tiền mặt':'Chuyển khoản'));cart={};save();toast('✅ Đã bán '+money(total));go('home')}
+function checkout(method){if(!assertDayUnlocked(today()))return;let ids=Object.keys(cart);if(!ids.length)return toast('Giỏ hàng đang trống');let total=0,items=[];for(let id of ids){let p=data.products.find(x=>x.id===id),q=cart[id];if(q>p.stock)return toast('Tồn kho không đủ: '+p.name);p.stock-=q;total+=p.price*q;items.push({productId:id,name:p.name,qty:q,price:p.price})}let sale={id:'S'+Date.now(),date:today(),method,total,items,createdAt:Date.now()};data.sales.push(sale);addAudit('sale_created','Tạo giao dịch '+sale.id+' · '+money(total)+' · '+(method==='cash'?'Tiền mặt':'Chuyển khoản'));cart={};save();toast('✅ Đã bán '+money(total));go('sell')}
 let scanner=null,scanMode='sell',scanBusy=false,currentScanZoom=1,torchOn=false,scanCaps=null;
 
 async function updateCameraPermissionStatus(){const el=document.getElementById('cameraPermissionStatus');if(!el)return;try{if(navigator.permissions&&navigator.permissions.query){const p=await navigator.permissions.query({name:'camera'});const paint=()=>{el.textContent=p.state==='granted'?'✅ Camera đã được trình duyệt cho phép.':p.state==='denied'?'⛔ Camera đang bị chặn. Mở quyền Camera cho website trong cài đặt trình duyệt.':'ℹ️ Trình duyệt đang để chế độ hỏi quyền camera.'};paint();p.onchange=paint}else el.textContent='ℹ️ Quyền camera do trình duyệt quản lý; app không thể tự ép ghi nhớ.'}catch(e){el.textContent='ℹ️ Quyền camera do trình duyệt quản lý.'}}
