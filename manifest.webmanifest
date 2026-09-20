@@ -1,5 +1,5 @@
 {
-  "name": "Sổ Tạp Hóa V1.1.3",
+  "name": "Sổ Tạp Hóa V1.2.1",
   "short_name": "Sổ Tạp Hóa",
   "start_url": "./",
   "display": "standalone",
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Fix quyền đồng bộ Cloud khi cập nhật kho; audit log bất biến."
+  "description": "Phiếu bán nợ có chữ ký khách hàng, hiển thị nợ cũ + nợ mới + lịch sử các lần nợ."
 }

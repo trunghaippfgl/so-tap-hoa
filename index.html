@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.1.3</title>
+<title>Sổ Tạp Hóa - MVP V1.2.1</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -59,6 +59,31 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 .onboarding h1{text-align:center;margin:8px 0 4px}
 .onboarding p{text-align:center;color:#607269;line-height:1.5}
 </style>
+
+<style id="v12-extra">
+.sell-product-scroll{max-height:48vh;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;border-radius:12px}
+.sell-cart-sticky{position:sticky;bottom:64px;z-index:4;background:var(--bg,#f4f8f6);padding-top:4px}
+.debt-badge{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:800;background:#fff0c7;color:#7a5900}
+.debt-paid{background:#dff5e7;color:#176530}
+@media(min-width:900px){
+  #sell{padding-bottom:24px}
+  .sell-cart-sticky{position:sticky;top:10px;bottom:auto}
+  .sell-product-scroll{max-height:56vh}
+}
+</style>
+
+<style id="v121-extra">
+.signature-pad{border:1px solid #cfd9d2;border-radius:12px;background:#fff;touch-action:none;width:100%;height:180px}
+.invoice-box{background:#fff;border:1px solid #e1e8e3;border-radius:14px;padding:14px}
+.invoice-table{width:100%;border-collapse:collapse;margin-top:8px}
+.invoice-table th,.invoice-table td{border-bottom:1px solid #edf1ee;padding:7px;text-align:left;font-size:13px}
+.invoice-total{font-size:18px;font-weight:800;margin-top:8px}
+@media print{
+  body *{visibility:hidden!important}
+  #debtInvoicePrint,#debtInvoicePrint *{visibility:visible!important}
+  #debtInvoicePrint{position:absolute;left:0;top:0;width:100%;padding:20px;background:#fff}
+}
+</style>
 </head>
 <body>
 <div id="storeOnboarding" class="onboarding">
@@ -78,7 +103,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.1.3 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.1 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -87,6 +112,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
     <button class="action" onclick="openImport()"><span>📦</span>NHẬP HÀNG</button>
     <button class="action" onclick="go('stock')"><span>🏪</span>KIỂM TRA KHO</button>
     <button class="action" onclick="go('tax')"><span>🧾</span>DOANH THU & THUẾ</button>
+<button class="action" onclick="go('debts')"><span>💳</span>CÔNG NỢ</button>
   </div>
   <div class="sectiontitle"><h2>👋 Hôm nay cần làm gì?</h2></div>
   <div id="todayTasks"></div>
@@ -104,14 +130,36 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   </div>
   <div class="card">
     <label>Tìm/chọn sản phẩm</label><input id="sellSearch" placeholder="VD: Coca, sữa, mì, rau..." oninput="renderSellProducts()">
-    <div id="sellProducts"></div>
+    <div id="sellProducts" class="sell-product-scroll"></div>
   </div>
-  <div class="card">
+  <div class="card sell-cart-sticky">
     <div class="sectiontitle"><h2>🧺 Giỏ hàng</h2><b id="cartCount">0 món</b></div>
     <div id="cart"></div>
     <div class="product"><div class="name">TỔNG TIỀN</div><div id="cartTotal" class="kpi">0đ</div></div>
   </div>
-  <div class="grid2"><button class="bigbtn" onclick="checkout('cash')">💵 TIỀN MẶT</button><button class="bigbtn blue" onclick="checkout('bank')">📱 CHUYỂN KHOẢN</button></div>
+  <div class="grid2">
+<button class="bigbtn" onclick="checkout('cash')">💵 TIỀN MẶT</button>
+<button class="bigbtn blue" onclick="checkout('bank')">📱 CHUYỂN KHOẢN</button>
+</div>
+<button class="bigbtn secondary" style="margin-top:8px" onclick="openDebtCheckout()">🧾 BÁN NỢ / GHI CÔNG NỢ</button>
+</section>
+
+<section id="debts" class="screen">
+  <div class="sectiontitle"><h2>💳 Công nợ</h2><span class="pill">Khách nợ · Nợ NCC</span></div>
+
+  <div class="card">
+    <div class="sectiontitle"><h2>👤 Khách hàng nợ</h2><button class="secondary" onclick="openCustomerDebtModal()">＋ GHI NỢ</button></div>
+    <input id="customerDebtSearch" placeholder="Tìm tên / SĐT..." oninput="renderCustomerDebts()">
+    <div id="customerDebtSummary" class="cloud-status"></div>
+    <div id="customerDebtList"></div>
+  </div>
+
+  <div class="card">
+    <div class="sectiontitle"><h2>🚚 Nợ nhà cung cấp</h2><button class="secondary" onclick="openSupplierDebtModal()">＋ GHI NỢ NCC</button></div>
+    <input id="supplierDebtSearch" placeholder="Tìm nhà cung cấp / SĐT..." oninput="renderSupplierDebts()">
+    <div id="supplierDebtSummary" class="cloud-status"></div>
+    <div id="supplierDebtList"></div>
+  </div>
 </section>
 
 <section id="stock" class="screen">
@@ -214,7 +262,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.1.3</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -288,6 +336,80 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <label>Mật khẩu ban đầu</label><input id="newUserPass" type="password" placeholder="Tối thiểu 6 ký tự">
 <label>Vai trò</label><select id="newUserRole"><option value="staff">Nhân viên bán hàng</option><option value="manager">Quản lý</option><option value="viewer">Chỉ xem</option></select>
 <button class="bigbtn" style="margin-top:12px" onclick="createStoreUser()">TẠO USER</button></div></div></div>
+<div id="customerDebtModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>👤 Ghi nợ khách hàng</h2><button class="x" onclick="closeModal('customerDebtModal')">✕</button></div>
+<div class="card">
+<label>Tên khách hàng *</label><input id="cdName">
+<label>Số điện thoại</label><input id="cdPhone" type="tel">
+<label>Số tiền nợ *</label><input id="cdAmount" type="number" min="1">
+<label>Ghi chú</label><textarea id="cdNote" placeholder="VD: Mua hàng ngày 20/09"></textarea>
+<button class="bigbtn" onclick="saveCustomerDebt()">LƯU CÔNG NỢ</button>
+<div class="tiny muted" style="margin-top:8px">Khi ghi nợ từ bán hàng, hệ thống sẽ tạo phiếu xác nhận có nợ cũ + nợ mới + chữ ký khách hàng.</div>
+</div></div></div>
+
+<div id="supplierDebtModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🚚 Ghi nợ nhà cung cấp</h2><button class="x" onclick="closeModal('supplierDebtModal')">✕</button></div>
+<div class="card">
+<label>Tên nhà cung cấp *</label><input id="sdName">
+<label>Số điện thoại</label><input id="sdPhone" type="tel">
+<label>Số tiền còn nợ *</label><input id="sdAmount" type="number" min="1">
+<label>Ghi chú</label><textarea id="sdNote" placeholder="VD: Phiếu nhập hàng ngày 20/09"></textarea>
+<button class="bigbtn" onclick="saveSupplierDebt()">LƯU NỢ NHÀ CUNG CẤP</button>
+</div></div></div>
+
+<div id="debtPaymentModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>💰 Thanh toán công nợ</h2><button class="x" onclick="closeModal('debtPaymentModal')">✕</button></div>
+<div class="card">
+<input id="dpType" type="hidden"><input id="dpId" type="hidden">
+<div id="dpTitle" style="font-size:18px;font-weight:800;margin-bottom:8px"></div>
+<label>Số tiền thanh toán</label><input id="dpAmount" type="number" min="1">
+<label>Ghi chú</label><input id="dpNote" placeholder="VD: Tiền mặt / chuyển khoản">
+<button class="bigbtn" onclick="applyDebtPayment()">XÁC NHẬN THANH TOÁN</button>
+</div></div></div>
+
+
+<div id="debtCheckoutModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🧾 Bán chịu / Ghi nợ</h2><button class="x" onclick="closeModal('debtCheckoutModal')">✕</button></div>
+<div class="card">
+<label>Tên khách hàng *</label><input id="dcCustomerName">
+<label>Số điện thoại</label><input id="dcCustomerPhone" type="tel">
+<div id="dcOldDebt" class="cloud-status"></div>
+<div id="dcCurrentSale" class="cloud-status"></div>
+<label>Khách ký xác nhận</label>
+<canvas id="debtSignaturePad" class="signature-pad" width="700" height="220"></canvas>
+<div class="grid2" style="margin-top:8px">
+<button class="secondary" onclick="clearDebtSignature()">XÓA CHỮ KÝ</button>
+<button class="secondary" onclick="useCustomerNameAsSignature()">KÝ BẰNG TÊN</button>
+</div>
+<button class="bigbtn" style="margin-top:12px" onclick="confirmDebtCheckout()">XÁC NHẬN BÁN NỢ</button>
+</div></div></div>
+
+<div id="debtInvoiceModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🧾 Phiếu xác nhận công nợ</h2><button class="x" onclick="closeModal('debtInvoiceModal')">✕</button></div>
+<div id="debtInvoicePrint" class="invoice-box"></div>
+<div class="grid2" style="margin-top:10px">
+<button class="bigbtn secondary" onclick="window.print()">🖨️ IN / LƯU PDF</button>
+<button class="bigbtn" onclick="closeModal('debtInvoiceModal')">ĐÓNG</button>
+</div>
+</div></div>
+
+<div id="saleQtyModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🛒 Nhập số lượng bán</h2><button class="x" onclick="closeModal('saleQtyModal')">✕</button></div>
+<div class="card">
+<input id="saleQtyProductId" type="hidden">
+<div id="saleQtyProductName" style="font-size:20px;font-weight:800;margin-bottom:4px"></div>
+<div id="saleQtyStockInfo" class="tiny muted" style="margin-bottom:10px"></div>
+<label>Số lượng</label>
+<input id="saleQtyInput" inputmode="numeric" type="number" min="1" step="1" value="1"
+       style="font-size:30px;font-weight:800;text-align:center;padding:14px"
+       onkeydown="if(event.key==='Enter'){confirmSaleQty()}">
+<div class="grid2" style="margin-top:10px">
+<button class="bigbtn secondary" onclick="changeSaleQty(-1)">− GIẢM</button>
+<button class="bigbtn secondary" onclick="changeSaleQty(1)">＋ TĂNG</button>
+</div>
+<button class="bigbtn" style="margin-top:12px" onclick="confirmSaleQty()">THÊM VÀO GIỎ</button>
+</div></div></div>
+
 <div id="accountRecoveryModal" class="modal"><div class="sheet">
 <div class="sheethead"><h2>🔐 Hỗ trợ tài khoản</h2><button class="x" onclick="closeModal('accountRecoveryModal')">✕</button></div>
 <div class="card">
@@ -862,7 +984,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.1.3 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.2.1 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -951,6 +1073,15 @@ async function pushCloudData(){
 
     // Audit log is immutable in Firestore Rules:
     // only create entries that do not exist yet; never merge/update old logs.
+    stage='công nợ khách hàng';
+    await writeArray(r.collection('customerDebts'),data.customerDebts,'CD');
+
+    stage='nợ nhà cung cấp';
+    await writeArray(r.collection('supplierDebts'),data.supplierDebts,'SD');
+
+    stage='phiếu công nợ';
+    await writeArray(r.collection('debtInvoices'),data.debtInvoices,'DN');
+
     stage='nhật ký hệ thống';
     await writeAuditLogNewOnly(r.collection('auditLog'),data.auditLog);
 
@@ -999,6 +1130,9 @@ async function pullCloudData(){
     data.products=p;data.sales=s;data.imports=i;data.closeDays=c;data.externalRevenue=e;
     data.auditLog=a.sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
     if(t.exists)data.taxProfile=t.data()||{};
+    data.customerDebts=await readArray(r.collection('customerDebts'));
+    data.supplierDebts=await readArray(r.collection('supplierDebts'));
+    data.debtInvoices=await readArray(r.collection('debtInvoices'));
     ensureSchema();localStorage.setItem(KEY,JSON.stringify(data));renderAll();
     cloudReady=true;setSyncStatus('Đã đồng bộ Cloud lúc '+new Date().toLocaleTimeString('vi-VN')+' · '+data.products.length+' SP · '+data.sales.length+' đơn');toast('☁️ Đã tải dữ liệu từ Cloud');return true;
   }catch(e){console.warn(e);setSyncStatus('Đồng bộ lỗi: '+e.message,false);alert('Tải dữ liệu Cloud thất bại: '+e.message);return false}
@@ -1031,6 +1165,11 @@ function ensureSchema(){
   if(!Array.isArray(data.externalRevenue))data.externalRevenue=[];
   if(!Array.isArray(data.auditLog))data.auditLog=[];
   if(!data.taxProfile)data.taxProfile={businessName:'',taxCode:'',address:''};
+
+  data.customerDebts=data.customerDebts||[];
+  data.supplierDebts=data.supplierDebts||[];
+
+  data.debtInvoices=data.debtInvoices||[];
 }
 function load(){try{data=JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){data=seed()}ensureSchema();try{currentStore=JSON.parse(localStorage.getItem(STORE_KEY)||'{}')||{}}catch(e){currentStore={}}localStorage.setItem(KEY,JSON.stringify(data));updateAuthBar()}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();scheduleCloudSync()}
@@ -1069,7 +1208,317 @@ function saveNoBarcodeProduct(){
   if(stock>0){addCart(p.id);go('sell');toast('✅ Đã thêm hàng không mã vào giỏ')}
   else{go('sell');toast('✅ Đã tạo hàng không mã; tồn đang bằng 0')}
 }
-function renderSellProducts(){let q=(document.getElementById('sellSearch').value||'').toLowerCase();let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q)).slice(0,20);document.getElementById('sellProducts').innerHTML=arr.map(p=>`<div class="product"><div><div class="name">${escHtml(p.name)}</div><small>${p.barcode?escHtml(p.barcode)+' · ':''}Còn ${p.stock} ${escHtml(p.base)} · ${money(p.price)}${p.noBarcode?' · Không mã':''}</small></div><button class="circle" onclick="addCart('${p.id}')">＋</button></div>`).join('')||'<div class="muted tiny">Không tìm thấy sản phẩm.</div>'}
+function renderSellProducts(){
+  let q=(document.getElementById('sellSearch').value||'').toLowerCase();
+  let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q)).slice(0,20);
+  document.getElementById('sellProducts').innerHTML=arr.map(p=>`
+    <div class="product" onclick="openSaleQty('${p.id}')" style="cursor:pointer">
+      <div>
+        <div class="name">${escHtml(p.name)}</div>
+        <small>${p.barcode?escHtml(p.barcode)+' · ':''}Còn ${p.stock} ${escHtml(p.base)} · ${money(p.price)}${p.noBarcode?' · Không mã':''}</small>
+      </div>
+      <button class="circle" onclick="event.stopPropagation();openSaleQty('${p.id}')" title="Nhập số lượng">SL</button>
+    </div>`).join('')||'<div class="muted tiny">Không tìm thấy sản phẩm.</div>';
+}
+
+
+
+let debtSignatureData='';
+let debtSignatureDrawing=false;
+let debtSignatureCtx=null;
+
+function cartSaleTotal(){
+  let total=0;
+  Object.entries(cart||{}).forEach(([id,q])=>{
+    const p=data.products.find(x=>x.id===id);
+    if(p) total+=(Number(p.price)||0)*(Number(q)||0);
+  });
+  return total;
+}
+function getCustomerOpenDebt(name,phone){
+  const normPhone=String(phone||'').replace(/\D/g,'');
+  const normName=String(name||'').trim().toLowerCase();
+  return (data.customerDebts||[]).filter(x=>{
+    if(Number(x.balance)<=0)return false;
+    const xp=String(x.phone||'').replace(/\D/g,'');
+    const xn=String(x.name||'').trim().toLowerCase();
+    return (normPhone&&xp===normPhone)||(!normPhone&&normName&&xn===normName);
+  });
+}
+function getCustomerDebtTotal(name,phone){
+  return getCustomerOpenDebt(name,phone).reduce((s,x)=>s+(Number(x.balance)||0),0);
+}
+function openDebtCheckout(){
+  if(!Object.keys(cart||{}).length)return alert('Giỏ hàng đang trống.');
+  dcCustomerName.value='';dcCustomerPhone.value='';
+  dcOldDebt.textContent='Nợ cũ: 0đ';
+  dcCurrentSale.textContent='Phát sinh lần này: '+money(cartSaleTotal());
+  debtSignatureData='';
+  debtCheckoutModal.classList.add('on');
+  setTimeout(initDebtSignaturePad,120);
+}
+function initDebtSignaturePad(){
+  const c=document.getElementById('debtSignaturePad');if(!c)return;
+  debtSignatureCtx=c.getContext('2d');
+  debtSignatureCtx.lineWidth=2.2;
+  debtSignatureCtx.lineCap='round';
+  debtSignatureCtx.clearRect(0,0,c.width,c.height);
+  const pos=e=>{
+    const r=c.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)};
+  };
+  const start=e=>{e.preventDefault();debtSignatureDrawing=true;const p=pos(e);debtSignatureCtx.beginPath();debtSignatureCtx.moveTo(p.x,p.y)};
+  const move=e=>{if(!debtSignatureDrawing)return;e.preventDefault();const p=pos(e);debtSignatureCtx.lineTo(p.x,p.y);debtSignatureCtx.stroke()};
+  const end=e=>{if(!debtSignatureDrawing)return;debtSignatureDrawing=false;debtSignatureData=c.toDataURL('image/png')};
+  c.onmousedown=start;c.onmousemove=move;c.onmouseup=end;c.onmouseleave=end;
+  c.ontouchstart=start;c.ontouchmove=move;c.ontouchend=end;
+  const updateOldDebt=()=>{
+    dcOldDebt.textContent='Nợ cũ: '+money(getCustomerDebtTotal(dcCustomerName.value,dcCustomerPhone.value));
+  };
+  dcCustomerName.oninput=updateOldDebt;
+  dcCustomerPhone.oninput=updateOldDebt;
+}
+function clearDebtSignature(){
+  const c=document.getElementById('debtSignaturePad');if(!c)return;
+  c.getContext('2d').clearRect(0,0,c.width,c.height);debtSignatureData='';
+}
+function useCustomerNameAsSignature(){
+  const name=dcCustomerName.value.trim();
+  if(!name)return alert('Nhập tên khách hàng trước.');
+  const c=document.getElementById('debtSignaturePad'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.font='italic 42px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(name,c.width/2,c.height/2);
+  debtSignatureData=c.toDataURL('image/png');
+}
+function currentCartItemsForInvoice(){
+  return Object.entries(cart||{}).map(([id,q])=>{
+    const p=data.products.find(x=>x.id===id);
+    if(!p)return null;
+    return {productId:id,name:p.name,qty:Number(q)||0,price:Number(p.price)||0,amount:(Number(q)||0)*(Number(p.price)||0)};
+  }).filter(Boolean);
+}
+async function confirmDebtCheckout(){
+  const name=dcCustomerName.value.trim(),phone=dcCustomerPhone.value.trim();
+  if(!name)return alert('Nhập tên khách hàng.');
+  if(!debtSignatureData)return alert('Khách hàng cần ký xác nhận công nợ.');
+
+  const saleAmount=cartSaleTotal();
+  if(saleAmount<=0)return alert('Giỏ hàng không hợp lệ.');
+
+  const oldDebt=getCustomerDebtTotal(name,phone);
+  const items=currentCartItemsForInvoice();
+  const invoiceId='DN-'+Date.now();
+
+  // Use normal checkout to deduct stock/create sale, but mark method as debt.
+  const saleRecord={
+    id:'S-'+Date.now(),
+    items:items.map(x=>({productId:x.productId,name:x.name,qty:x.qty,price:x.price})),
+    total:saleAmount,
+    method:'debt',
+    customerName:name,
+    customerPhone:phone,
+    createdAt:Date.now()
+  };
+
+  // Validate stock and deduct.
+  for(const item of items){
+    const p=data.products.find(x=>x.id===item.productId);
+    if(!p)return alert('Không tìm thấy '+item.name);
+    if(Number(p.stock)<item.qty)return alert(item.name+' không đủ tồn kho.');
+  }
+  items.forEach(item=>{
+    const p=data.products.find(x=>x.id===item.productId);
+    p.stock=Number(p.stock)-item.qty;
+  });
+  data.sales.push(saleRecord);
+
+  const debtEntry={
+    id:'CD-'+Date.now(),
+    invoiceId,
+    saleId:saleRecord.id,
+    name,phone,
+    originalAmount:saleAmount,
+    balance:saleAmount,
+    note:'Bán nợ · '+invoiceId,
+    status:'open',
+    payments:[],
+    createdAt:Date.now(),
+    updatedAt:Date.now()
+  };
+  data.customerDebts.push(debtEntry);
+
+  const invoice={
+    id:invoiceId,
+    type:'customer_debt',
+    customerName:name,
+    customerPhone:phone,
+    saleId:saleRecord.id,
+    items,
+    previousDebt:oldDebt,
+    newDebt:saleAmount,
+    totalDebt:oldDebt+saleAmount,
+    signatureData:debtSignatureData,
+    createdAt:Date.now()
+  };
+  data.debtInvoices.push(invoice);
+
+  addAudit('debt_sale_created','Bán nợ '+name+' · '+saleAmount+' · tổng nợ '+(oldDebt+saleAmount));
+  cart={};
+  save();
+  renderAll();
+  closeModal('debtCheckoutModal');
+  renderDebtInvoice(invoice);
+  debtInvoiceModal.classList.add('on');
+}
+function renderDebtInvoice(inv){
+  const history=(data.customerDebts||[])
+    .filter(x=>{
+      const samePhone=inv.customerPhone&&String(x.phone||'').replace(/\D/g,'')===String(inv.customerPhone||'').replace(/\D/g,'');
+      const sameName=!inv.customerPhone&&String(x.name||'').trim().toLowerCase()===String(inv.customerName||'').trim().toLowerCase();
+      return samePhone||sameName;
+    })
+    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+
+  const rows=inv.items.map((x,i)=>`<tr><td>${i+1}</td><td>${escHtml(x.name)}</td><td>${x.qty}</td><td>${money(x.price)}</td><td>${money(x.amount)}</td></tr>`).join('');
+  const debtHistory=history.map((x,i)=>`<tr><td>${i+1}</td><td>${new Date(x.createdAt).toLocaleString('vi-VN')}</td><td>${escHtml(x.invoiceId||x.note||'Khoản nợ')}</td><td>${money(x.originalAmount)}</td><td>${money(x.balance)}</td></tr>`).join('');
+
+  debtInvoicePrint.innerHTML=`
+    <div style="text-align:center"><h2>PHIẾU BÁN HÀNG & XÁC NHẬN CÔNG NỢ</h2>
+    <div class="tiny">Mã phiếu: ${escHtml(inv.id)} · ${new Date(inv.createdAt).toLocaleString('vi-VN')}</div></div>
+    <p><b>Khách hàng:</b> ${escHtml(inv.customerName)} ${inv.customerPhone?'· '+escHtml(inv.customerPhone):''}</p>
+    <table class="invoice-table"><thead><tr><th>#</th><th>Mặt hàng</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="invoice-total">Tiền hàng lần này: ${money(inv.newDebt)}</div>
+    <div class="invoice-total">Nợ cũ trước lần mua này: ${money(inv.previousDebt)}</div>
+    <div class="invoice-total">TỔNG NỢ SAU LẦN NÀY: ${money(inv.totalDebt)}</div>
+    <h3>Lịch sử các lần ghi nợ</h3>
+    <table class="invoice-table"><thead><tr><th>#</th><th>Ngày</th><th>Phiếu</th><th>Phát sinh</th><th>Còn lại</th></tr></thead><tbody>${debtHistory}</tbody></table>
+    <div style="margin-top:24px;text-align:center">
+      <b>Khách hàng xác nhận công nợ</b><br>
+      <img src="${inv.signatureData}" style="max-width:280px;max-height:120px;margin-top:8px"><br>
+      <span>${escHtml(inv.customerName)}</span>
+    </div>`;
+}
+function openDebtInvoiceById(id){
+  const inv=(data.debtInvoices||[]).find(x=>x.id===id);if(!inv)return;
+  renderDebtInvoice(inv);debtInvoiceModal.classList.add('on');
+}
+
+function openCustomerDebtModal(){
+  cdName.value='';cdPhone.value='';cdAmount.value='';cdNote.value='';
+  customerDebtModal.classList.add('on');
+}
+function openSupplierDebtModal(){
+  sdName.value='';sdPhone.value='';sdAmount.value='';sdNote.value='';
+  supplierDebtModal.classList.add('on');
+}
+function saveCustomerDebt(){
+  const name=cdName.value.trim(),phone=cdPhone.value.trim(),amount=Number(cdAmount.value)||0,note=cdNote.value.trim();
+  if(!name||amount<=0)return alert('Nhập tên khách hàng và số tiền nợ.');
+  data.customerDebts.push({id:'CD-'+Date.now(),name,phone,originalAmount:amount,balance:amount,note,status:'open',payments:[],createdAt:Date.now(),updatedAt:Date.now()});
+  addAudit('customer_debt_created','Ghi nợ khách hàng '+name+' · '+amount);
+  save();closeModal('customerDebtModal');renderCustomerDebts();toast('Đã ghi nợ khách hàng');
+}
+function saveSupplierDebt(){
+  const name=sdName.value.trim(),phone=sdPhone.value.trim(),amount=Number(sdAmount.value)||0,note=sdNote.value.trim();
+  if(!name||amount<=0)return alert('Nhập tên nhà cung cấp và số tiền còn nợ.');
+  data.supplierDebts.push({id:'SD-'+Date.now(),name,phone,originalAmount:amount,balance:amount,note,status:'open',payments:[],createdAt:Date.now(),updatedAt:Date.now()});
+  addAudit('supplier_debt_created','Ghi nợ nhà cung cấp '+name+' · '+amount);
+  save();closeModal('supplierDebtModal');renderSupplierDebts();toast('Đã ghi nợ nhà cung cấp');
+}
+function renderCustomerDebts(){
+  const box=document.getElementById('customerDebtList');if(!box)return;
+  const q=(document.getElementById('customerDebtSearch')?.value||'').toLowerCase();
+  const arr=(data.customerDebts||[]).filter(x=>!q||[x.name,x.phone,x.note].join(' ').toLowerCase().includes(q));
+  const total=arr.reduce((s,x)=>s+(Number(x.balance)||0),0);
+  customerDebtSummary.textContent='Tổng khách còn nợ: '+money(total)+' · '+arr.filter(x=>Number(x.balance)>0).length+' khoản';
+  box.innerHTML=arr.slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0)).map(x=>`
+    <div class="product">
+      <div style="flex:1"><div class="name">${escHtml(x.name)}</div>
+      <small>${escHtml(x.phone||'')} ${x.note?'· '+escHtml(x.note):''}</small><br>
+      <span class="debt-badge ${Number(x.balance)<=0?'debt-paid':''}">${Number(x.balance)<=0?'Đã thanh toán':'Còn nợ '+money(x.balance)}</span></div>
+      ${Number(x.balance)>0?`<button class="secondary" onclick="openDebtPayment('customer','${x.id}')">THU NỢ</button>`:''}
+      ${x.invoiceId?`<button class="secondary" onclick="openDebtInvoiceById('${x.invoiceId}')">XEM PHIẾU</button>`:''}
+    </div>`).join('')||'<div class="tiny muted">Chưa có khách hàng nợ.</div>';
+}
+function renderSupplierDebts(){
+  const box=document.getElementById('supplierDebtList');if(!box)return;
+  const q=(document.getElementById('supplierDebtSearch')?.value||'').toLowerCase();
+  const arr=(data.supplierDebts||[]).filter(x=>!q||[x.name,x.phone,x.note].join(' ').toLowerCase().includes(q));
+  const total=arr.reduce((s,x)=>s+(Number(x.balance)||0),0);
+  supplierDebtSummary.textContent='Tổng còn nợ nhà cung cấp: '+money(total)+' · '+arr.filter(x=>Number(x.balance)>0).length+' khoản';
+  box.innerHTML=arr.slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0)).map(x=>`
+    <div class="product">
+      <div style="flex:1"><div class="name">${escHtml(x.name)}</div>
+      <small>${escHtml(x.phone||'')} ${x.note?'· '+escHtml(x.note):''}</small><br>
+      <span class="debt-badge ${Number(x.balance)<=0?'debt-paid':''}">${Number(x.balance)<=0?'Đã thanh toán':'Còn nợ '+money(x.balance)}</span></div>
+      ${Number(x.balance)>0?`<button class="secondary" onclick="openDebtPayment('supplier','${x.id}')">TRẢ NỢ</button>`:''}
+    </div>`).join('')||'<div class="tiny muted">Chưa có nợ nhà cung cấp.</div>';
+}
+function openDebtPayment(type,id){
+  const arr=type==='customer'?data.customerDebts:data.supplierDebts;
+  const x=arr.find(v=>v.id===id);if(!x)return;
+  dpType.value=type;dpId.value=id;dpTitle.textContent=(type==='customer'?'Thu nợ: ':'Trả nợ: ')+x.name+' · Còn '+money(x.balance);
+  dpAmount.value=x.balance;dpNote.value='';debtPaymentModal.classList.add('on');
+}
+function applyDebtPayment(){
+  const type=dpType.value,id=dpId.value,amount=Number(dpAmount.value)||0,note=dpNote.value.trim();
+  const arr=type==='customer'?data.customerDebts:data.supplierDebts;
+  const x=arr.find(v=>v.id===id);if(!x)return;
+  if(amount<=0)return alert('Nhập số tiền thanh toán.');
+  if(amount>Number(x.balance))return alert('Số tiền thanh toán lớn hơn số dư công nợ.');
+  x.balance=Number(x.balance)-amount;x.payments=x.payments||[];x.payments.push({amount,note,createdAt:Date.now()});x.updatedAt=Date.now();
+  if(x.balance<=0){x.balance=0;x.status='paid'}
+  addAudit(type==='customer'?'customer_debt_payment':'supplier_debt_payment',(type==='customer'?'Thu nợ ':'Trả nợ ')+x.name+' · '+amount);
+  save();closeModal('debtPaymentModal');renderCustomerDebts();renderSupplierDebts();toast(type==='customer'?'Đã ghi nhận thu nợ':'Đã ghi nhận trả nợ');
+}
+
+function openSaleQty(id){
+  const p=data.products.find(x=>x.id===id);
+  if(!p)return alert('Không tìm thấy sản phẩm.');
+  if(Number(p.stock)<=0)return toast('Mặt hàng đã hết');
+
+  saleQtyProductId.value=id;
+  saleQtyProductName.textContent=p.name||'Sản phẩm';
+  saleQtyStockInfo.textContent='Tồn kho: '+p.stock+' '+(p.base||'')+' · Giá bán: '+money(p.price);
+
+  // Nếu mặt hàng đã có trong giỏ, hiển thị số lượng hiện tại để chỉnh trực tiếp.
+  saleQtyInput.value=cart[id]||1;
+  saleQtyModal.classList.add('on');
+
+  setTimeout(()=>{
+    saleQtyInput.focus();
+    saleQtyInput.select();
+  },120);
+}
+function changeSaleQty(delta){
+  let q=Math.floor(Number(saleQtyInput.value)||1)+delta;
+  saleQtyInput.value=Math.max(1,q);
+}
+function confirmSaleQty(){
+  const id=saleQtyProductId.value;
+  const p=data.products.find(x=>x.id===id);
+  if(!p)return alert('Không tìm thấy sản phẩm.');
+
+  let q=Math.floor(Number(saleQtyInput.value)||0);
+  if(q<1)return alert('Số lượng bán phải từ 1 trở lên.');
+
+  const stock=Number(p.stock)||0;
+  if(q>stock){
+    alert('Tồn kho chỉ còn '+stock+' '+(p.base||'')+'. Vui lòng nhập số lượng nhỏ hơn hoặc bằng tồn kho.');
+    saleQtyInput.value=Math.max(1,stock);
+    saleQtyInput.focus();
+    saleQtyInput.select();
+    return;
+  }
+
+  cart[id]=q;
+  renderCart();
+  closeModal('saleQtyModal');
+  toast('Đã thêm '+q+' '+(p.base||'')+' '+p.name);
+}
+
 function addCart(id){let p=data.products.find(x=>x.id===id);if(!p||p.stock<=0)return toast('Mặt hàng đã hết');cart[id]=(cart[id]||0)+1;if(cart[id]>p.stock)cart[id]=p.stock;renderCart()}
 function renderCart(){let ids=Object.keys(cart).filter(id=>cart[id]>0);let total=0,count=0;document.getElementById('cart').innerHTML=ids.map(id=>{let p=data.products.find(x=>x.id===id),q=cart[id],sub=p.price*q;total+=sub;count+=q;return `<div class="product"><div><div class="name">${p.name}</div><small>${money(p.price)} × ${q}</small></div><div class="qtyctrl"><button class="circle" onclick="chgCart('${id}',-1)">−</button><b>${q}</b><button class="circle" onclick="chgCart('${id}',1)">＋</button></div></div>`}).join('')||'<div class="muted tiny">Chưa có sản phẩm.</div>';document.getElementById('cartTotal').textContent=money(total);document.getElementById('cartCount').textContent=count+' món'}
 function chgCart(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];let p=data.products.find(x=>x.id===id);if(cart[id]>p.stock)cart[id]=p.stock;renderCart()}
@@ -1393,7 +1842,7 @@ function finishCloseDay(){
   closeResult.innerHTML=Math.abs(diff)<1?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Tiền thực tế đúng với doanh thu ghi nhận.</small></div></div>`:`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Kiểm tra lại giao dịch, doanh thu ngoài app hoặc tiền thực tế.</small></div></div>`;
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function renderAll(){renderHome();renderSellProducts();renderCart();renderStock();renderTax()}
+function renderAll(){renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts()}
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 load();populateBrandCatalogSelect();renderAll();
 </script></body></html>
