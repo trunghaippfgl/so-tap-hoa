@@ -1,5 +1,5 @@
 {
-  "name": "Sổ Tạp Hóa V1.2.1",
+  "name": "Sổ Tạp Hóa V1.2.3",
   "short_name": "Sổ Tạp Hóa",
   "start_url": "./",
   "display": "standalone",
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Phiếu bán nợ có chữ ký khách hàng, hiển thị nợ cũ + nợ mới + lịch sử các lần nợ."
+  "description": "Danh bạ khách hàng; chọn khách cũ khi bán nợ; tự liên kết các khoản nợ theo customerId."
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.2.1</title>
+<title>Sổ Tạp Hóa - MVP V1.2.3</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -103,7 +103,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.1 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.3 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -113,6 +113,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
     <button class="action" onclick="go('stock')"><span>🏪</span>KIỂM TRA KHO</button>
     <button class="action" onclick="go('tax')"><span>🧾</span>DOANH THU & THUẾ</button>
 <button class="action" onclick="go('debts')"><span>💳</span>CÔNG NỢ</button>
+<button class="action" onclick="go('customers')"><span>👥</span>KHÁCH HÀNG</button>
   </div>
   <div class="sectiontitle"><h2>👋 Hôm nay cần làm gì?</h2></div>
   <div id="todayTasks"></div>
@@ -142,6 +143,16 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <button class="bigbtn blue" onclick="checkout('bank')">📱 CHUYỂN KHOẢN</button>
 </div>
 <button class="bigbtn secondary" style="margin-top:8px" onclick="openDebtCheckout()">🧾 BÁN NỢ / GHI CÔNG NỢ</button>
+</section>
+
+<section id="customers" class="screen">
+  <div class="sectiontitle"><h2>👥 Khách hàng</h2><span class="pill">Danh bạ · Công nợ</span></div>
+  <div class="card">
+    <div class="sectiontitle"><h2>Danh sách khách hàng</h2><button class="secondary" onclick="openCustomerMasterModal()">＋ THÊM KH</button></div>
+    <input id="customerMasterSearch" placeholder="Tìm tên / SĐT..." oninput="renderCustomers()">
+    <div id="customerMasterSummary" class="cloud-status"></div>
+    <div id="customerMasterList"></div>
+  </div>
 </section>
 
 <section id="debts" class="screen">
@@ -196,6 +207,13 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="taxgrid">
     <div class="taxcard"><div class="label">Hôm nay</div><div id="taxToday" class="big">0đ</div></div>
     <div class="taxcard"><div class="label">Tháng này</div><div id="taxMonth" class="big">0đ</div></div>
+  </div>
+  <div class="taxgrid" style="margin-top:10px">
+    <div class="taxcard"><div class="label">BÁN NỢ HÔM NAY</div><div id="taxDebtToday" class="big">0đ</div></div>
+    <div class="taxcard"><div class="label">CHƯA THU TỪ KHÁCH</div><div id="taxReceivable" class="big">0đ</div></div>
+  </div>
+  <div class="taxnote" style="margin-top:6px">
+    Doanh thu bán nợ vẫn được ghi nhận vào doanh thu bán hàng. “Chưa thu từ khách” là phần tiền công nợ còn phải thu, tách riêng để không nhầm với tiền đã nhận.
   </div>
   <div class="card" style="margin-top:10px">
     <div class="sectiontitle"><h2>📚 Sổ S1a-HKD</h2></div>
@@ -262,7 +280,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.3</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -368,10 +386,34 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 </div></div></div>
 
 
+
+<div id="customerMasterModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>👤 Khách hàng</h2><button class="x" onclick="closeModal('customerMasterModal')">✕</button></div>
+<div class="card">
+<input id="cmId" type="hidden">
+<label>Tên khách hàng *</label><input id="cmName">
+<label>Số điện thoại</label><input id="cmPhone" type="tel">
+<label>Địa chỉ</label><input id="cmAddress">
+<label>Ghi chú</label><textarea id="cmNote"></textarea>
+<button class="bigbtn" onclick="saveCustomerMaster()">LƯU KHÁCH HÀNG</button>
+</div></div></div>
+
+<div id="customerPickerModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>🔎 Chọn khách hàng</h2><button class="x" onclick="closeModal('customerPickerModal')">✕</button></div>
+<div class="card">
+<input id="customerPickerSearch" placeholder="Nhập tên hoặc SĐT..." oninput="renderCustomerPicker()">
+<div id="customerPickerList"></div>
+</div></div></div>
+
 <div id="debtCheckoutModal" class="modal"><div class="sheet">
 <div class="sheethead"><h2>🧾 Bán chịu / Ghi nợ</h2><button class="x" onclick="closeModal('debtCheckoutModal')">✕</button></div>
 <div class="card">
-<label>Tên khách hàng *</label><input id="dcCustomerName">
+<label>Khách hàng *</label>
+<div class="grid2">
+  <input id="dcCustomerName" placeholder="Tên khách hàng">
+  <button class="secondary" onclick="openCustomerPicker()">🔎 CHỌN KH</button>
+</div>
+<input id="dcCustomerId" type="hidden">
 <label>Số điện thoại</label><input id="dcCustomerPhone" type="tel">
 <div id="dcOldDebt" class="cloud-status"></div>
 <div id="dcCurrentSale" class="cloud-status"></div>
@@ -984,7 +1026,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.2.1 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.2.3 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -1073,6 +1115,9 @@ async function pushCloudData(){
 
     // Audit log is immutable in Firestore Rules:
     // only create entries that do not exist yet; never merge/update old logs.
+    stage='khách hàng';
+    await writeArray(r.collection('customers'),data.customers,'CUS');
+
     stage='công nợ khách hàng';
     await writeArray(r.collection('customerDebts'),data.customerDebts,'CD');
 
@@ -1133,6 +1178,7 @@ async function pullCloudData(){
     data.customerDebts=await readArray(r.collection('customerDebts'));
     data.supplierDebts=await readArray(r.collection('supplierDebts'));
     data.debtInvoices=await readArray(r.collection('debtInvoices'));
+    data.customers=await readArray(r.collection('customers'));
     ensureSchema();localStorage.setItem(KEY,JSON.stringify(data));renderAll();
     cloudReady=true;setSyncStatus('Đã đồng bộ Cloud lúc '+new Date().toLocaleTimeString('vi-VN')+' · '+data.products.length+' SP · '+data.sales.length+' đơn');toast('☁️ Đã tải dữ liệu từ Cloud');return true;
   }catch(e){console.warn(e);setSyncStatus('Đồng bộ lỗi: '+e.message,false);alert('Tải dữ liệu Cloud thất bại: '+e.message);return false}
@@ -1170,6 +1216,8 @@ function ensureSchema(){
   data.supplierDebts=data.supplierDebts||[];
 
   data.debtInvoices=data.debtInvoices||[];
+
+  data.customers=data.customers||[];
 }
 function load(){try{data=JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){data=seed()}ensureSchema();try{currentStore=JSON.parse(localStorage.getItem(STORE_KEY)||'{}')||{}}catch(e){currentStore={}}localStorage.setItem(KEY,JSON.stringify(data));updateAuthBar()}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();scheduleCloudSync()}
@@ -1184,6 +1232,47 @@ function appRevenueForDate(date){return activeSalesForDate(date).reduce((a,s)=>a
 function externalRevenueForDate(date){return externalForDate(date).reduce((a,x)=>a+Number(x.amount||0),0)}
 function businessRevenueForDate(date){return appRevenueForDate(date)+externalRevenueForDate(date)}
 function todaySales(){return activeSalesForDate(today())}
+
+
+function repairCustomerMaster(){
+  let changed=false;
+  (data.customerDebts||[]).forEach(d=>{
+    let c=null;
+    if(d.customerId)c=(data.customers||[]).find(x=>x.id===d.customerId);
+    if(!c){
+      const np=normalizePhone(d.phone),nn=String(d.name||'').trim().toLowerCase();
+      c=(data.customers||[]).find(x=>(np&&normalizePhone(x.phone)===np)||(!np&&String(x.name||'').trim().toLowerCase()===nn));
+      if(!c){
+        c={id:'CUS-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),name:d.name||'Khách hàng',phone:d.phone||'',address:'',note:'Tạo tự động từ công nợ cũ',createdAt:d.createdAt||Date.now(),updatedAt:Date.now()};
+        data.customers.push(c);changed=true;
+      }
+      d.customerId=c.id;changed=true;
+    }
+  });
+  if(changed){
+    localStorage.setItem(KEY,JSON.stringify(data));
+    scheduleCloudSync();
+  }
+}
+
+function repairMissingSaleDates(){
+  let changed=false;
+  (data.sales||[]).forEach(s=>{
+    if(!s.date && s.createdAt){
+      const d=new Date(Number(s.createdAt));
+      if(!isNaN(d)){
+        const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+        s.date=`${y}-${m}-${day}`;
+        changed=true;
+      }
+    }
+  });
+  if(changed){
+    localStorage.setItem(KEY,JSON.stringify(data));
+    scheduleCloudSync();
+  }
+}
+
 function revenue(){return businessRevenueForDate(today())}
 function currentYear(){return Number(today().slice(0,4))}
 function yearRevenue(y=currentYear()){return data.sales.filter(s=>!s.cancelled&&String(s.date||'').startsWith(String(y))).reduce((a,s)=>a+Number(s.total||0),0)+data.externalRevenue.filter(x=>!x.cancelled&&String(x.date||'').startsWith(String(y))).reduce((a,x)=>a+Number(x.amount||0),0)}
@@ -1235,22 +1324,23 @@ function cartSaleTotal(){
   });
   return total;
 }
-function getCustomerOpenDebt(name,phone){
+function getCustomerOpenDebt(name,phone,customerId=''){
   const normPhone=String(phone||'').replace(/\D/g,'');
   const normName=String(name||'').trim().toLowerCase();
   return (data.customerDebts||[]).filter(x=>{
     if(Number(x.balance)<=0)return false;
+    if(customerId&&x.customerId===customerId)return true;
     const xp=String(x.phone||'').replace(/\D/g,'');
     const xn=String(x.name||'').trim().toLowerCase();
     return (normPhone&&xp===normPhone)||(!normPhone&&normName&&xn===normName);
   });
 }
-function getCustomerDebtTotal(name,phone){
-  return getCustomerOpenDebt(name,phone).reduce((s,x)=>s+(Number(x.balance)||0),0);
+function getCustomerDebtTotal(name,phone,customerId=''){
+  return getCustomerOpenDebt(name,phone,customerId).reduce((s,x)=>s+(Number(x.balance)||0),0);
 }
 function openDebtCheckout(){
   if(!Object.keys(cart||{}).length)return alert('Giỏ hàng đang trống.');
-  dcCustomerName.value='';dcCustomerPhone.value='';
+  dcCustomerId.value='';dcCustomerName.value='';dcCustomerPhone.value='';
   dcOldDebt.textContent='Nợ cũ: 0đ';
   dcCurrentSale.textContent='Phát sinh lần này: '+money(cartSaleTotal());
   debtSignatureData='';
@@ -1274,7 +1364,7 @@ function initDebtSignaturePad(){
   c.onmousedown=start;c.onmousemove=move;c.onmouseup=end;c.onmouseleave=end;
   c.ontouchstart=start;c.ontouchmove=move;c.ontouchend=end;
   const updateOldDebt=()=>{
-    dcOldDebt.textContent='Nợ cũ: '+money(getCustomerDebtTotal(dcCustomerName.value,dcCustomerPhone.value));
+    dcOldDebt.textContent='Nợ cũ: '+money(getCustomerDebtTotal(dcCustomerName.value,dcCustomerPhone.value,dcCustomerId.value));
   };
   dcCustomerName.oninput=updateOldDebt;
   dcCustomerPhone.oninput=updateOldDebt;
@@ -1301,22 +1391,28 @@ function currentCartItemsForInvoice(){
 }
 async function confirmDebtCheckout(){
   const name=dcCustomerName.value.trim(),phone=dcCustomerPhone.value.trim();
+  const customer=dcCustomerId.value
+    ? (data.customers||[]).find(x=>x.id===dcCustomerId.value)
+    : ensureCustomerRecord(name,phone);
+  if(customer) dcCustomerId.value=customer.id;
   if(!name)return alert('Nhập tên khách hàng.');
   if(!debtSignatureData)return alert('Khách hàng cần ký xác nhận công nợ.');
 
   const saleAmount=cartSaleTotal();
   if(saleAmount<=0)return alert('Giỏ hàng không hợp lệ.');
 
-  const oldDebt=getCustomerDebtTotal(name,phone);
+  const oldDebt=getCustomerDebtTotal(name,phone,customer?.id||dcCustomerId.value);
   const items=currentCartItemsForInvoice();
   const invoiceId='DN-'+Date.now();
 
   // Use normal checkout to deduct stock/create sale, but mark method as debt.
   const saleRecord={
     id:'S-'+Date.now(),
+    date:today(),
     items:items.map(x=>({productId:x.productId,name:x.name,qty:x.qty,price:x.price})),
     total:saleAmount,
     method:'debt',
+    customerId:customer?.id||dcCustomerId.value||'',
     customerName:name,
     customerPhone:phone,
     createdAt:Date.now()
@@ -1338,6 +1434,7 @@ async function confirmDebtCheckout(){
     id:'CD-'+Date.now(),
     invoiceId,
     saleId:saleRecord.id,
+    customerId:customer?.id||dcCustomerId.value||'',
     name,phone,
     originalAmount:saleAmount,
     balance:saleAmount,
@@ -1352,6 +1449,7 @@ async function confirmDebtCheckout(){
   const invoice={
     id:invoiceId,
     type:'customer_debt',
+    customerId:customer?.id||dcCustomerId.value||'',
     customerName:name,
     customerPhone:phone,
     saleId:saleRecord.id,
@@ -1403,6 +1501,87 @@ function renderDebtInvoice(inv){
 function openDebtInvoiceById(id){
   const inv=(data.debtInvoices||[]).find(x=>x.id===id);if(!inv)return;
   renderDebtInvoice(inv);debtInvoiceModal.classList.add('on');
+}
+
+
+function normalizePhone(v){return String(v||'').replace(/\D/g,'')}
+function customerDebtByCustomerId(customerId){
+  return (data.customerDebts||[]).filter(x=>x.customerId===customerId&&Number(x.balance)>0).reduce((s,x)=>s+Number(x.balance||0),0);
+}
+function openCustomerMasterModal(id=''){
+  const c=(data.customers||[]).find(x=>x.id===id);
+  cmId.value=c?.id||'';
+  cmName.value=c?.name||'';
+  cmPhone.value=c?.phone||'';
+  cmAddress.value=c?.address||'';
+  cmNote.value=c?.note||'';
+  customerMasterModal.classList.add('on');
+}
+function saveCustomerMaster(){
+  const id=cmId.value||('CUS-'+Date.now());
+  const name=cmName.value.trim(),phone=cmPhone.value.trim(),address=cmAddress.value.trim(),note=cmNote.value.trim();
+  if(!name)return alert('Nhập tên khách hàng.');
+  let c=(data.customers||[]).find(x=>x.id===id);
+  if(c){Object.assign(c,{name,phone,address,note,updatedAt:Date.now()})}
+  else data.customers.push({id,name,phone,address,note,createdAt:Date.now(),updatedAt:Date.now()});
+  save();closeModal('customerMasterModal');renderCustomers();toast('Đã lưu khách hàng');
+}
+function renderCustomers(){
+  const box=document.getElementById('customerMasterList');if(!box)return;
+  const q=(customerMasterSearch?.value||'').toLowerCase();
+  const arr=(data.customers||[]).filter(c=>!q||[c.name,c.phone,c.address,c.note].join(' ').toLowerCase().includes(q));
+  const totalDebt=arr.reduce((s,c)=>s+customerDebtByCustomerId(c.id),0);
+  customerMasterSummary.textContent='Tổng '+arr.length+' khách · Công nợ '+money(totalDebt);
+  box.innerHTML=arr.map(c=>{
+    const debt=customerDebtByCustomerId(c.id);
+    return `<div class="product">
+      <div style="flex:1"><div class="name">${escHtml(c.name)}</div><small>${escHtml(c.phone||'')} ${c.address?'· '+escHtml(c.address):''}</small>
+      ${debt>0?`<br><span class="debt-badge">Đang nợ ${money(debt)}</span>`:''}</div>
+      <button class="secondary" onclick="selectCustomerForDebt('${c.id}')">BÁN NỢ</button>
+      <button class="circle" onclick="openCustomerMasterModal('${c.id}')">✎</button>
+    </div>`;
+  }).join('')||'<div class="tiny muted">Chưa có khách hàng.</div>';
+}
+function openCustomerPicker(){
+  customerPickerSearch.value='';
+  renderCustomerPicker();
+  customerPickerModal.classList.add('on');
+}
+function renderCustomerPicker(){
+  const q=(customerPickerSearch?.value||'').toLowerCase();
+  const arr=(data.customers||[]).filter(c=>!q||[c.name,c.phone].join(' ').toLowerCase().includes(q));
+  customerPickerList.innerHTML=arr.map(c=>`
+    <div class="product" onclick="pickCustomer('${c.id}')" style="cursor:pointer">
+      <div><div class="name">${escHtml(c.name)}</div><small>${escHtml(c.phone||'')} · Nợ ${money(customerDebtByCustomerId(c.id))}</small></div>
+      <button class="secondary">CHỌN</button>
+    </div>`).join('')||'<div class="tiny muted">Không tìm thấy khách hàng.</div>';
+}
+function pickCustomer(id){
+  const c=(data.customers||[]).find(x=>x.id===id);if(!c)return;
+  dcCustomerId.value=c.id;
+  dcCustomerName.value=c.name;
+  dcCustomerPhone.value=c.phone||'';
+  dcOldDebt.textContent='Nợ cũ: '+money(customerDebtByCustomerId(c.id));
+  closeModal('customerPickerModal');
+}
+function selectCustomerForDebt(id){
+  const c=(data.customers||[]).find(x=>x.id===id);if(!c)return;
+  if(!Object.keys(cart||{}).length){go('sell');toast('Chọn hàng trước rồi bán nợ cho '+c.name);return}
+  openDebtCheckout();
+  setTimeout(()=>pickCustomer(id),150);
+}
+function ensureCustomerRecord(name,phone){
+  const np=normalizePhone(phone),nn=String(name||'').trim().toLowerCase();
+  let c=(data.customers||[]).find(x=>(np&&normalizePhone(x.phone)===np)||(!np&&String(x.name||'').trim().toLowerCase()===nn));
+  if(c){
+    c.name=name||c.name;
+    if(phone)c.phone=phone;
+    c.updatedAt=Date.now();
+    return c;
+  }
+  c={id:'CUS-'+Date.now(),name,phone:phone||'',address:'',note:'',createdAt:Date.now(),updatedAt:Date.now()};
+  data.customers.push(c);
+  return c;
 }
 
 function openCustomerDebtModal(){
@@ -1750,6 +1929,15 @@ function saveImport(){let p=data.products.find(x=>x.id===document.getElementById
 
 function fmtDate(d){if(!d)return '';const p=String(d).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d}
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function debtSalesForDate(date){
+  return (data.sales||[]).filter(s=>!s.cancelled&&s.method==='debt'&&String(s.date||'')===date)
+    .reduce((a,s)=>a+Number(s.total||0),0);
+}
+function customerReceivableTotal(){
+  return (data.customerDebts||[]).reduce((a,x)=>a+Number(x.balance||0),0);
+}
+
 function renderTax(){
   ensureSchema();
   const y=currentYear(),annual=yearRevenue(y),pct=Math.min(100,annual/1000000000*100);
@@ -1757,6 +1945,8 @@ function renderTax(){
   document.getElementById('annualRevenue').textContent=money(annual);
   document.getElementById('taxToday').textContent=money(revenue());
   document.getElementById('taxMonth').textContent=money(monthRevenue());
+  const debtTodayEl=document.getElementById('taxDebtToday');if(debtTodayEl)debtTodayEl.textContent=money(debtSalesForDate(today()));
+  const recvEl=document.getElementById('taxReceivable');if(recvEl)recvEl.textContent=money(customerReceivableTotal());
   document.getElementById('thresholdText').textContent=`${pct.toFixed(1)}% của ngưỡng 1.000.000.000đ`;
   const fill=document.getElementById('thresholdFill'),bar=document.getElementById('thresholdBar');
   fill.style.width=pct+'%';bar.className='progress'+(annual>1000000000?' danger':annual>=900000000?' warn':'');
@@ -1797,7 +1987,7 @@ function renderExternalRevenue(){
 function renderSalesAudit(){
   const box=document.getElementById('salesAuditList');if(!box)return;
   const arr=[...data.sales].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,20);
-  box.innerHTML=arr.length?arr.map(s=>`<div class="item"><div><b>${fmtDate(s.date)} · ${s.id}</b><div class="tiny muted">${s.method==='cash'?'Tiền mặt':'Chuyển khoản'} · ${(s.items||[]).length} mặt hàng${s.cancelReason?' · Lý do hủy: '+escHtml(s.cancelReason):''}</div></div><div style="text-align:right"><b>${money(s.total)}</b><div>${s.cancelled?'<span class="badge red">Đã hủy</span>':`<button class="circle" onclick="cancelSale('${s.id}')">↩</button>`}</div></div></div>`).join(''):'<div class="tiny muted" style="margin-top:8px">Chưa có giao dịch.</div>';
+  box.innerHTML=arr.length?arr.map(s=>`<div class="item"><div><b>${fmtDate(s.date)} · ${s.id}</b><div class="tiny muted">${s.method==='cash'?'Tiền mặt':s.method==='bank'?'Chuyển khoản':s.method==='debt'?'Bán nợ':'Khác'} · ${(s.items||[]).length} mặt hàng${s.cancelReason?' · Lý do hủy: '+escHtml(s.cancelReason):''}</div></div><div style="text-align:right"><b>${money(s.total)}</b><div>${s.cancelled?'<span class="badge red">Đã hủy</span>':`<button class="circle" onclick="cancelSale('${s.id}')">↩</button>`}</div></div></div>`).join(''):'<div class="tiny muted" style="margin-top:8px">Chưa có giao dịch.</div>';
 }
 function cancelSale(id){
   const s=data.sales.find(v=>v.id===id);if(!s||s.cancelled)return;if(!assertDayUnlocked(s.date))return;
@@ -1842,7 +2032,7 @@ function finishCloseDay(){
   closeResult.innerHTML=Math.abs(diff)<1?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Tiền thực tế đúng với doanh thu ghi nhận.</small></div></div>`:`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Kiểm tra lại giao dịch, doanh thu ngoài app hoặc tiền thực tế.</small></div></div>`;
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function renderAll(){renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts()}
+function renderAll(){repairCustomerMaster();repairMissingSaleDates();renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers()}
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 load();populateBrandCatalogSelect();renderAll();
 </script></body></html>
