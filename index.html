@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V0.6.3.1</title>
+<title>Sổ Tạp Hóa - MVP V0.6.3.2</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -81,25 +81,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
-<div class="card">
-  <div class="sectiontitle"><h2>🏪 Tài khoản cửa hàng</h2></div>
-  <div class="taxnote">Tạo một cửa hàng mới với tài khoản chủ sở hữu riêng. Sau khi có cửa hàng, chủ cửa hàng mới tạo thêm nhân viên.</div>
-  <div class="grid2" style="margin-top:10px">
-    <button class="bigbtn" onclick="openCreateStoreAccount()">＋ TẠO USER CỬA HÀNG</button>
-    <button class="bigbtn secondary" onclick="openAuthSetup()">🔐 ĐĂNG NHẬP</button>
-  </div>
-</div>
-
-<div class="card">
-  <div class="sectiontitle"><h2>👥 Nhân viên cửa hàng</h2></div>
-  <div class="taxnote">Chỉ dùng sau khi đã đăng nhập bằng tài khoản chủ/quản lý của cửa hàng.</div>
-  <div class="grid2" style="margin-top:10px">
-    <button class="bigbtn secondary" onclick="openCreateUser()">＋ TẠO NHÂN VIÊN</button>
-    <button class="bigbtn secondary" onclick="go('more');setTimeout(renderMembers,100)">👤 XEM NHÂN VIÊN</button>
-  </div>
-</div>
-
-  <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
+<div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
   <div class="actions">
     <button class="action" onclick="go('sell')"><span>🛒</span>BÁN HÀNG</button>
     <button class="action" onclick="openImport()"><span>📦</span>NHẬP HÀNG</button>
@@ -205,7 +187,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <button class="bigbtn secondary" style="margin-top:10px" onclick="openCreateStoreAccount()">＋ TẠO CỬA HÀNG MỚI</button>
 </div>
 
-<div class="card"><div class="sectiontitle"><h2>👥 User / nhân viên của cửa hàng</h2></div>
+<div class="card"><div class="sectiontitle"><h2>👥 Quản lý nhân viên</h2></div>
 <div class="taxnote">Tạo tài khoản đăng nhập cho nhân viên theo cửa hàng hiện tại.</div>
 <button class="bigbtn secondary" style="margin-top:10px" onclick="openCreateUser()">＋ TẠO USER NHÂN VIÊN</button>
 <div id="memberList" style="margin-top:8px"></div></div>
@@ -215,7 +197,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" onclick="loadDemo()">🧪 Nạp lại dữ liệu mẫu</button><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.6.3.1</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V0.6.3.2</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
