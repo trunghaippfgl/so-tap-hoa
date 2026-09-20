@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.2.3</title>
+<title>Sổ Tạp Hóa - MVP V1.2.4</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -103,7 +103,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.3 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.4 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -280,7 +280,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.3</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.4</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -491,7 +491,18 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 </div></div></div>
 
 <div id="closeDayModal" class="modal"><div class="sheet"><div class="sheethead"><h2>🌙 Chốt ngày 30 giây</h2><button class="x" onclick="closeModal('closeDayModal')">✕</button></div>
-<div class="card"><div class="label">Doanh thu hệ thống hôm nay</div><div id="closeSys" class="kpi">0đ</div><label>Tiền mặt thực tế</label><input id="closeCash" type="number" inputmode="numeric"><label>Chuyển khoản thực nhận</label><input id="closeBank" type="number" inputmode="numeric"><button class="bigbtn" style="margin-top:14px" onclick="finishCloseDay()">ĐỐI CHIẾU NGAY</button></div><div id="closeResult"></div></div></div>
+<div class="card">
+<div class="label">TỔNG DOANH THU HÔM NAY</div><div id="closeSys" class="kpi">0đ</div>
+<div class="taxgrid" style="margin-top:10px">
+  <div class="taxcard"><div class="label">BÁN NỢ / CHƯA THU</div><div id="closeDebt" class="big">0đ</div></div>
+  <div class="taxcard"><div class="label">CẦN ĐỐI CHIẾU THỰC THU</div><div id="closeExpectedCollected" class="big">0đ</div></div>
+</div>
+<div class="taxnote" style="margin-top:8px">Công thức: Tổng doanh thu − Bán nợ = Số tiền cần đối chiếu thực thu.</div>
+<label>Tiền mặt thực tế</label><input id="closeCash" type="number" inputmode="numeric">
+<label>Chuyển khoản thực nhận</label><input id="closeBank" type="number" inputmode="numeric">
+<div id="closeActualPreview" class="cloud-status"></div>
+<button class="bigbtn" style="margin-top:14px" onclick="finishCloseDay()">ĐỐI CHIẾU NGAY</button>
+</div><div id="closeResult"></div></div></div>
 
 <div id="newProductModal" class="modal"><div class="sheet"><div class="sheethead"><h2>＋ Hàng mới siêu nhanh</h2><button class="x" onclick="closeModal('newProductModal')">✕</button></div>
 <div class="card"><div class="tiny muted">Chỉ cần 3 thông tin để bắt đầu bán. Các thông tin nâng cao có thể bổ sung sau.</div><label>Tên sản phẩm *</label><input id="newName" placeholder="VD: Nước suối Lavie 500ml"><label>Giá bán *</label><input id="newPrice" type="number" inputmode="numeric" placeholder="10000"><div class="row"><div><label>Đơn vị lẻ</label><input id="newBase" placeholder="chai / gói / hộp"></div><div><label>1 thùng/lốc = ?</label><input id="newCase" type="number" value="1" min="1"></div></div><label>Barcode (không bắt buộc)</label><input id="newBarcode" inputmode="numeric" placeholder="Quét hoặc nhập mã"><button class="bigbtn secondary" style="margin-top:10px" onclick="openBrandCatalog('newProduct')">🏷️ CHỌN TỪ KHO VINAMILK / HÃNG</button><div id="catalogPickedHint" class="hintbox" style="display:none"></div><button class="bigbtn" style="margin-top:14px" onclick="saveNewProduct()">LƯU & BẮT ĐẦU BÁN</button></div></div></div>
@@ -1026,7 +1037,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.2.3 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.2.4 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -2023,13 +2034,71 @@ const reason=prompt('Lý do mở khóa ngày:');if(!reason)return;
 x.locked=false;x.unlockedAt=Date.now();x.unlockReason=reason;x.unlockedBy=currentUser?currentUser.uid:null;
 addAudit('day_unlocked','Mở khóa '+today()+' · Lý do: '+reason);save();
 }
-function openCloseDay(){if(!canEditStoreData())return alert('Tài khoản này không có quyền chốt ngày.');closeSys.textContent=money(revenue());closeCash.value='';closeBank.value='';closeResult.innerHTML='';closeDayModal.classList.add('on')}
+
+function debtRevenueForDate(date){
+  return (data.sales||[])
+    .filter(s=>!s.cancelled&&s.method==='debt'&&String(s.date||'')===date)
+    .reduce((a,s)=>a+Number(s.total||0),0);
+}
+function collectedRevenueForDate(date){
+  return businessRevenueForDate(date)-debtRevenueForDate(date);
+}
+function updateCloseActualPreview(){
+  const cash=Number(closeCash?.value)||0,bank=Number(closeBank?.value)||0;
+  const actual=cash+bank,expected=collectedRevenueForDate(today()),diff=actual-expected;
+  if(closeActualPreview){
+    closeActualPreview.textContent='Thực thu nhập vào: '+money(actual)+(Math.abs(diff)<1?' · Khớp số cần đối chiếu':' · Chênh '+money(diff));
+  }
+}
+
+function openCloseDay(){
+  if(!canEditStoreData())return alert('Tài khoản này không có quyền chốt ngày.');
+  const sys=revenue(),debt=debtRevenueForDate(today()),expected=sys-debt;
+  closeSys.textContent=money(sys);
+  closeDebt.textContent=money(debt);
+  closeExpectedCollected.textContent=money(expected);
+  closeCash.value='';closeBank.value='';
+  closeCash.oninput=updateCloseActualPreview;
+  closeBank.oninput=updateCloseActualPreview;
+  closeActualPreview.textContent='Thực thu nhập vào: 0đ';
+  closeResult.innerHTML='';
+  closeDayModal.classList.add('on')
+}
 function finishCloseDay(){
   if(!canEditStoreData())return alert('Tài khoản này không có quyền chốt ngày.');
-  let cash=Number(closeCash.value)||0,bank=Number(closeBank.value)||0,actual=cash+bank,sys=revenue(),diff=actual-sys,old=data.closeDays.find(x=>x.date===today());
-  data.closeDays=data.closeDays.filter(x=>x.date!==today());data.closeDays.push({date:today(),cash,bank,system:sys,diff,createdAt:Date.now(),replaces:old?old.createdAt:null,locked:true,lockedAt:Date.now(),lockedBy:currentUser?currentUser.uid:null});
-  addAudit('day_closed',`Chốt và khóa ngày ${today()} · Hệ thống ${money(sys)} · Thực tế ${money(actual)} · Chênh ${money(diff)}`);save();
-  closeResult.innerHTML=Math.abs(diff)<1?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Tiền thực tế đúng với doanh thu ghi nhận.</small></div></div>`:`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Kiểm tra lại giao dịch, doanh thu ngoài app hoặc tiền thực tế.</small></div></div>`;
+  const cash=Number(closeCash.value)||0;
+  const bank=Number(closeBank.value)||0;
+  const actual=cash+bank;
+  const sys=revenue();
+  const debt=debtRevenueForDate(today());
+  const expectedCollected=sys-debt;
+  const diff=actual-expectedCollected;
+  const old=data.closeDays.find(x=>x.date===today());
+
+  data.closeDays=data.closeDays.filter(x=>x.date!==today());
+  data.closeDays.push({
+    date:today(),
+    cash,bank,
+    system:sys,
+    debt,
+    expectedCollected,
+    actualCollected:actual,
+    diff,
+    createdAt:Date.now(),
+    replaces:old?old.createdAt:null,
+    locked:true,
+    lockedAt:Date.now(),
+    lockedBy:currentUser?currentUser.uid:null
+  });
+
+  addAudit('day_closed',
+    `Chốt và khóa ngày ${today()} · Doanh thu ${money(sys)} · Bán nợ ${money(debt)} · Cần thực thu ${money(expectedCollected)} · Thực thu ${money(actual)} · Chênh ${money(diff)}`
+  );
+  save();
+
+  closeResult.innerHTML=Math.abs(diff)<1
+    ?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Doanh thu ${money(sys)} − bán nợ ${money(debt)} = thực thu cần đối chiếu ${money(expectedCollected)}. Bạn đã nhập thực thu ${money(actual)}.</small></div></div>`
+    :`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Doanh thu ${money(sys)} · Bán nợ ${money(debt)} · Cần thực thu ${money(expectedCollected)} · Đã nhập ${money(actual)}.</small></div></div>`;
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
 function renderAll(){repairCustomerMaster();repairMissingSaleDates();renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers()}
