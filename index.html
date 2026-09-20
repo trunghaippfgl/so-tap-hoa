@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.0.3</title>
+<title>Sổ Tạp Hóa - MVP V1.0.4</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -115,13 +115,13 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 </section>
 
 <section id="stock" class="screen">
-<div class="card"><div class="sectiontitle"><h2>☁️ Danh mục Cloud</h2></div>
-<div class="tiny muted">Danh mục Cloud dùng để nhận diện barcode. Chỉ khi cửa hàng nhập giá/tồn thì sản phẩm mới vào kho riêng.</div>
-<button class="bigbtn secondary" style="margin-top:10px" onclick="refreshCloudCatalog()">🔄 ĐỒNG BỘ DANH MỤC CLOUD</button>
+<div class="card"><div class="sectiontitle"><h2>☁️ Danh mục sản phẩm Cloud</h2></div>
+<div class="tiny muted">Đồng bộ sẽ đưa sản phẩm đã có trên Cloud về Kho cửa hàng. Sản phẩm mới có tên/barcode/thương hiệu/đơn vị; giá bán, giá vốn và tồn kho mặc định bằng 0 để cửa hàng tự nhập.</div>
+<button class="bigbtn secondary" style="margin-top:10px" onclick="syncEverythingFromCloud()">🔄 ĐỒNG BỘ CLOUD → KHO CỬA HÀNG</button>
 <div id="cloudCatalogStatus" class="cloud-status">Chưa đồng bộ trong phiên này.</div></div>
   <div class="sectiontitle"><h2>🏪 Kho & Date</h2><button class="circle" onclick="openImport()">＋</button></div>
   <div class="grid2"><div class="card"><div class="label">Giá trị tồn</div><div id="stockValue" class="kpi" style="font-size:20px">0đ</div></div><div class="card"><div class="label">Sắp hết hàng</div><div id="lowCount" class="kpi" style="font-size:20px">0</div></div></div>
-  <div class="card"><label>Tìm sản phẩm</label><input id="stockSearch" placeholder="Tên hàng..." oninput="renderStock()"><div id="stockList"></div></div>
+  <div class="card"><label>Tìm sản phẩm</label><input id="stockSearch" placeholder="Tên hàng hoặc barcode..." oninput="renderStock()"><div id="stockList"></div></div>
 </section>
 
 <section id="tax" class="screen">
@@ -184,7 +184,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><div class="sectiontitle"><h2>☁️ Trạng thái hệ thống</h2></div>
 <div id="productionSyncStatus" class="cloud-status">Đang kiểm tra Cloud…</div>
 <div id="cloudDiag" class="tiny muted" style="margin-top:6px">Cloud là nguồn dữ liệu chính. Đồng bộ sẽ tải lại dữ liệu của đúng cửa hàng đang đăng nhập.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ SAO LƯU</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="syncEverythingFromCloud()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ SAO LƯU</button></div></div>
 
 <div class="card">
   <div class="sectiontitle"><h2>🏪 Cửa hàng hiện tại</h2></div>
@@ -198,11 +198,11 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div id="memberList" style="margin-top:8px"></div></div>
 <div class="card"><div class="sectiontitle"><h2>☁️ Production</h2></div>
 <div class="taxnote">Đăng nhập + storeId để đồng bộ bán hàng, tồn kho, chốt ngày, nhật ký và hồ sơ thuế lên Firestore.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ ĐẨY LÊN CLOUD</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="syncEverythingFromCloud()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ ĐẨY LÊN CLOUD</button></div></div>
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.0.3</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.0.4</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -326,7 +326,89 @@ catch(e){console.warn('persistence unavailable',e)}
 
 function loadCloudCatalogCache(){try{cloudCatalogCache=JSON.parse(localStorage.getItem(CLOUD_CATALOG_KEY)||'{}')||{}}catch(e){cloudCatalogCache={}}}
 function saveCloudCatalogCache(){localStorage.setItem(CLOUD_CATALOG_KEY,JSON.stringify(cloudCatalogCache))}
-async function refreshCloudCatalog(){if(!cloudDb)return alert('Firestore chưa sẵn sàng.');const box=document.getElementById('cloudCatalogStatus');if(box)box.textContent='Đang đồng bộ…';try{const snap=await cloudDb.collection('products').limit(2000).get();const next={};snap.forEach(d=>{const x=d.data()||{};next[String(x.barcode||d.id)]=x});cloudCatalogCache=next;saveCloudCatalogCache();let updated=0;data.products.forEach(p=>{if(!p.barcode)return;const c=cloudCatalogCache[String(p.barcode)];if(c){if(c.brand&&!p.brand)p.brand=c.brand;if(c.category&&!p.category)p.category=c.category;updated++}});localStorage.setItem(KEY,JSON.stringify(data));renderAll();if(box)box.textContent='✅ Đã đồng bộ '+Object.keys(next).length+' mã Cloud. Khớp '+updated+' hàng trong kho.';toast('Đã cập nhật danh mục Cloud')}catch(e){if(box)box.textContent='⚠️ Không đồng bộ được: '+e.message}}
+
+async function syncEverythingFromCloud(){
+  const box=document.getElementById('cloudCatalogStatus');
+  if(box)box.textContent='Đang đồng bộ dữ liệu cửa hàng và danh mục sản phẩm…';
+  const storeOk=await pullCloudData();
+  if(storeOk===false)return false;
+  const result=await refreshCloudCatalog();
+  renderAll();
+  return !result.error;
+}
+async function refreshCloudCatalog(){
+  const box=document.getElementById('cloudCatalogStatus');
+  if(!cloudDb){if(box)box.textContent='⚠️ Firestore chưa sẵn sàng.';alert('Cloud chưa sẵn sàng.');return {total:0,added:0,updated:0}}
+  if(!currentUser||!currentStore.id){if(box)box.textContent='⚠️ Hãy đăng nhập cửa hàng trước.';alert('Bạn cần đăng nhập cửa hàng trước khi đồng bộ danh mục Cloud.');return {total:0,added:0,updated:0}}
+  if(box)box.textContent='Đang tải danh mục sản phẩm Cloud…';
+
+  try{
+    const snap=await cloudDb.collection('products').limit(2000).get();
+    const next={};
+    let added=0,updated=0,skipped=0;
+
+    snap.forEach(doc=>{
+      const c=doc.data()||{};
+      const barcode=String(c.barcode||doc.id||'').trim();
+      if(!barcode||!c.name){skipped++;return}
+
+      next[barcode]=c;
+      let p=data.products.find(x=>String(x.barcode||'')===barcode);
+
+      if(p){
+        // Chỉ bổ sung thông tin danh mục. Không ghi đè giá/tồn của cửa hàng.
+        if(c.name && (!p.name || p.cloudSource)) p.name=c.name;
+        if(c.brand) p.brand=c.brand;
+        if(c.category) p.category=c.category;
+        if(c.size) p.size=c.size;
+        if(c.unit||c.base) p.base=c.unit||c.base||p.base||'cái';
+        if(c.caseSize) p.caseSize=c.caseSize;
+        if(c.imageUrl||c.photoURL||c.image) p.imageUrl=c.imageUrl||c.photoURL||c.image;
+        p.cloudSource=true;
+        p.cloudUpdatedAt=Date.now();
+        updated++;
+      }else{
+        const base=c.unit||c.base||'cái';
+        data.products.push({
+          id:'CLOUD-'+barcode,
+          barcode,
+          name:c.name,
+          brand:c.brand||'',
+          category:c.category||'',
+          size:c.size||'',
+          base,
+          caseName:c.caseName||'',
+          caseSize:Number(c.caseSize)||1,
+          stock:0,
+          cost:0,
+          price:0,
+          expiry:'',
+          imageUrl:c.imageUrl||c.photoURL||c.image||'',
+          cloudSource:true,
+          createdAt:Date.now(),
+          cloudUpdatedAt:Date.now()
+        });
+        added++;
+      }
+    });
+
+    cloudCatalogCache=next;
+    saveCloudCatalogCache();
+
+    // Lưu local và đẩy ngay kho cửa hàng lên Cloud production.
+    addAudit('cloud_catalog_synced','Đồng bộ danh mục Cloud: thêm '+added+' · cập nhật '+updated+' · tổng '+Object.keys(next).length);
+    save();
+
+    if(box)box.textContent='✅ Cloud: '+Object.keys(next).length+' sản phẩm · Thêm mới vào kho: '+added+' · Cập nhật: '+updated+(skipped?' · Bỏ qua: '+skipped:'');
+    toast('☁️ Đã đưa '+added+' sản phẩm mới từ Cloud vào Kho cửa hàng');
+    return {total:Object.keys(next).length,added,updated,skipped};
+  }catch(e){
+    console.warn('Cloud catalog sync failed',e);
+    if(box)box.textContent='⚠️ Không đồng bộ được: '+e.message;
+    alert('Đồng bộ danh mục Cloud thất bại: '+e.message);
+    return {total:0,added:0,updated:0,error:e};
+  }
+}
 async function lookupCloudProduct(code){
   const key=String(code);
   if(cloudCatalogCache[key]&&cloudCatalogCache[key].name)return cloudCatalogCache[key];
@@ -533,7 +615,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.0.3 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.0.4 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -911,7 +993,7 @@ function pickBrandProduct(idx){
 
 function openNewProduct(){['newName','newPrice','newBarcode'].forEach(id=>document.getElementById(id).value='');document.getElementById('catalogPickedHint').style.display='none';document.getElementById('newBase').value='cái';document.getElementById('newCase').value='1';document.getElementById('newProductModal').classList.add('on')}
 function saveNewProduct(){let name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value)||0,base=document.getElementById('newBase').value.trim()||'cái',caseSize=Math.max(1,Number(document.getElementById('newCase').value)||1),barcode=document.getElementById('newBarcode').value.trim();if(!name||price<=0)return toast('Nhập tên và giá bán');if(barcode&&data.products.some(p=>p.barcode===barcode))return toast('Barcode này đã có');let cat=BRAND_CATALOG.find(x=>normText((x.name+(x.size?' '+x.size:'')))===normText(name));let p={id:'p'+Date.now(),barcode,name,base,caseName:'thùng/lốc',caseSize,stock:0,cost:0,price,expiry:'',brand:cat?cat.brand:'',category:cat?cat.category:'',catalogSource:cat?(BRAND_SOURCES[cat.brand]||'official brand website'):''};data.products.unshift(p);save();closeModal('newProductModal');addCart(p.id);toast('✅ Đã tạo hàng mới')}
-function renderStock(){let q=(document.getElementById('stockSearch').value||'').toLowerCase();let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q));document.getElementById('stockList').innerHTML=arr.map(p=>{let d=daysLeft(p.expiry),tag='';if(d!==null){tag=d<0?`<span class="pill red">Quá hạn ${-d} ngày</span>`:d<=7?`<span class="pill red">Còn ${d} ngày</span>`:d<=30?`<span class="pill amber">Còn ${d} ngày</span>`:''}return `<div class="product stock-edit" onclick="openProductEdit('${p.id}')"><div><div class="name">${escHtml(p.name)}</div><small>${p.barcode?escHtml(p.barcode)+' · ':''}Tồn ${p.stock} ${escHtml(p.base)} · vốn ${money(p.cost)} · bán ${money(p.price)}</small><div style="margin-top:5px">${tag}</div></div><div class="right"><div class="money">${money(p.stock*p.cost)}</div><small>✏️ Sửa${p.stock<=5?' · ⚠️ sắp hết':''}</small></div></div>`}).join('');document.getElementById('stockValue').textContent=money(data.products.reduce((a,p)=>a+p.stock*p.cost,0));document.getElementById('lowCount').textContent=data.products.filter(p=>p.stock<=5).length}
+function renderStock(){let q=(document.getElementById('stockSearch').value||'').toLowerCase();let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q));document.getElementById('stockList').innerHTML=arr.map(p=>{let d=daysLeft(p.expiry),tag='';if(d!==null){tag=d<0?`<span class="pill red">Quá hạn ${-d} ngày</span>`:d<=7?`<span class="pill red">Còn ${d} ngày</span>`:d<=30?`<span class="pill amber">Còn ${d} ngày</span>`:''}return `<div class="product stock-edit" onclick="openProductEdit('${p.id}')"><div><div class="name">${escHtml(p.name)}</div><small>${p.barcode?escHtml(p.barcode)+' · ':''}Tồn ${p.stock} ${escHtml(p.base)} · vốn ${money(p.cost)} · bán ${money(p.price)}${p.cloudSource&&p.price===0&&p.stock===0?' · ⚠️ Chưa nhập giá/tồn':''}</small><div style="margin-top:5px">${tag}</div></div><div class="right"><div class="money">${money(p.stock*p.cost)}</div><small>✏️ Sửa${p.stock<=5?' · ⚠️ sắp hết':''}</small></div></div>`}).join('');document.getElementById('stockValue').textContent=money(data.products.reduce((a,p)=>a+p.stock*p.cost,0));document.getElementById('lowCount').textContent=data.products.filter(p=>p.stock<=5).length}
 function openProductEdit(id){const p=data.products.find(x=>x.id===id);if(!p)return;editProductId.value=p.id;editName.value=p.name||'';editBarcode.value=p.barcode||'';editPrice.value=p.price||0;editCost.value=p.cost||0;editStock.value=p.stock||0;editBase.value=p.base||'cái';editCase.value=p.caseSize||1;editExpiry.value=p.expiry||'';editStockModal.classList.add('on')}
 function saveProductEdit(){if(!canEditStoreData())return alert('Bạn không có quyền sửa kho.');const p=data.products.find(x=>x.id===editProductId.value);if(!p)return;const old={stock:p.stock,price:p.price,cost:p.cost};const barcode=editBarcode.value.trim();if(barcode&&data.products.some(x=>x.id!==p.id&&x.barcode===barcode))return alert('Barcode này đã thuộc sản phẩm khác.');p.name=editName.value.trim()||p.name;p.barcode=barcode;p.price=Math.max(0,Number(editPrice.value)||0);p.cost=Math.max(0,Number(editCost.value)||0);p.stock=Math.max(0,Number(editStock.value)||0);p.base=editBase.value.trim()||'cái';p.caseSize=Math.max(1,Number(editCase.value)||1);p.expiry=editExpiry.value||'';addAudit('product_edited','Sửa kho '+p.name+' · tồn '+old.stock+'→'+p.stock+' · giá bán '+money(old.price)+'→'+money(p.price));save();closeModal('editStockModal');toast('✅ Đã cập nhật kho')}
 function fillImportProducts(){document.getElementById('impProduct').innerHTML=data.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');syncImportPrice()}
