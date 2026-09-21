@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.2.5</title>
+<title>Sổ Tạp Hóa - MVP V1.2.6</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -103,7 +103,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.5 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.6 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -114,6 +114,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
     <button class="action" onclick="go('tax')"><span>🧾</span>DOANH THU & THUẾ</button>
 <button class="action" onclick="go('debts')"><span>💳</span>CÔNG NỢ</button>
 <button class="action" onclick="go('customers')"><span>👥</span>KHÁCH HÀNG</button>
+<button class="action" onclick="go('pendingSigns')"><span>✍️</span>PHIẾU CHỜ KÝ</button>
   </div>
   <div class="sectiontitle"><h2>👋 Hôm nay cần làm gì?</h2></div>
   <div id="todayTasks"></div>
@@ -143,6 +144,14 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <button class="bigbtn blue" onclick="checkout('bank')">📱 CHUYỂN KHOẢN</button>
 </div>
 <button class="bigbtn secondary" style="margin-top:8px" onclick="openDebtCheckout()">🧾 BÁN NỢ / GHI CÔNG NỢ</button>
+</section>
+
+<section id="pendingSigns" class="screen">
+  <div class="sectiontitle"><h2>✍️ Phiếu công nợ chờ ký</h2><span class="pill">Realtime</span></div>
+  <div class="card">
+    <div class="tiny muted">Các phiếu bán nợ tạo từ POS máy tính sẽ xuất hiện tại đây. Mở phiếu và đưa khách ký trực tiếp trên điện thoại.</div>
+    <div id="pendingSignList" style="margin-top:10px"></div>
+  </div>
 </section>
 
 <section id="customers" class="screen">
@@ -280,7 +289,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.5</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.6</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -403,6 +412,21 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <div class="card">
 <input id="customerPickerSearch" placeholder="Nhập tên hoặc SĐT..." oninput="renderCustomerPicker()">
 <div id="customerPickerList"></div>
+</div></div></div>
+
+
+<div id="mobileDebtSignModal" class="modal"><div class="sheet">
+<div class="sheethead"><h2>✍️ Xác nhận công nợ</h2><button class="x" onclick="closeModal('mobileDebtSignModal')">✕</button></div>
+<div class="card">
+<input id="mobileSignInvoiceId" type="hidden">
+<div id="mobileSignInfo"></div>
+<label style="margin-top:10px">Khách hàng ký xác nhận</label>
+<canvas id="mobileDebtSignaturePad" class="signature-pad" width="700" height="220"></canvas>
+<div class="grid2" style="margin-top:8px">
+<button class="secondary" onclick="clearMobileDebtSignature()">XÓA CHỮ KÝ</button>
+<button class="secondary" onclick="mobileSignByName()">KÝ BẰNG TÊN</button>
+</div>
+<button class="bigbtn" style="margin-top:12px" onclick="confirmMobileDebtSignature()">XÁC NHẬN & LƯU CLOUD</button>
 </div></div></div>
 
 <div id="debtCheckoutModal" class="modal"><div class="sheet">
@@ -1039,7 +1063,7 @@ async function doLogout(){
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.2.5 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.2.6 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -1618,6 +1642,88 @@ function normalizePhone(v){return String(v||'').replace(/\D/g,'')}
 function customerDebtByCustomerId(customerId){
   return (data.customerDebts||[]).filter(x=>x.customerId===customerId&&Number(x.balance)>0).reduce((s,x)=>s+Number(x.balance||0),0);
 }
+
+let mobileDebtSignatureData='';
+let mobileDebtSignatureDrawing=false;
+
+function pendingDebtInvoices(){
+  return (data.debtInvoices||[]).filter(x=>x.signatureStatus!=='signed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+function renderPendingSigns(){
+  const box=document.getElementById('pendingSignList');if(!box)return;
+  const arr=pendingDebtInvoices();
+  box.innerHTML=arr.length?arr.map(x=>`
+    <div class="product">
+      <div style="flex:1">
+        <div class="name">${escHtml(x.customerName||'Khách hàng')}</div>
+        <small>${new Date(x.createdAt||Date.now()).toLocaleString('vi-VN')} · ${escHtml(x.id||'')}</small><br>
+        <span class="debt-badge">Tổng nợ ${money(x.totalDebt||x.newDebt||0)}</span>
+      </div>
+      <button class="secondary" onclick="openMobileDebtSign('${x.id}')">KÝ</button>
+    </div>`).join(''):'<div class="tiny muted">Không có phiếu công nợ nào đang chờ ký.</div>';
+}
+function initMobileDebtSignPad(){
+  const c=document.getElementById('mobileDebtSignaturePad');if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.lineWidth=2.2;ctx.lineCap='round';ctx.clearRect(0,0,c.width,c.height);
+  const pos=e=>{const r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)}};
+  const start=e=>{e.preventDefault();mobileDebtSignatureDrawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)};
+  const move=e=>{if(!mobileDebtSignatureDrawing)return;e.preventDefault();const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()};
+  const end=e=>{if(!mobileDebtSignatureDrawing)return;mobileDebtSignatureDrawing=false;mobileDebtSignatureData=c.toDataURL('image/png')};
+  c.onmousedown=start;c.onmousemove=move;c.onmouseup=end;c.onmouseleave=end;
+  c.ontouchstart=start;c.ontouchmove=move;c.ontouchend=end;
+}
+function openMobileDebtSign(id){
+  const inv=(data.debtInvoices||[]).find(x=>x.id===id);if(!inv)return;
+  mobileSignInvoiceId.value=id;
+  mobileDebtSignatureData='';
+  mobileSignInfo.innerHTML=`
+    <div><b>${escHtml(inv.customerName||'Khách hàng')}</b> ${inv.customerPhone?'· '+escHtml(inv.customerPhone):''}</div>
+    <div class="tiny muted">Phiếu ${escHtml(inv.id)} · ${new Date(inv.createdAt||Date.now()).toLocaleString('vi-VN')}</div>
+    <div class="taxnote" style="margin-top:8px">Nợ cũ: <b>${money(inv.previousDebt||0)}</b><br>Phát sinh lần này: <b>${money(inv.newDebt||0)}</b><br>Tổng nợ mới: <b>${money(inv.totalDebt||0)}</b></div>`;
+  mobileDebtSignModal.classList.add('on');
+  setTimeout(initMobileDebtSignPad,120);
+}
+function clearMobileDebtSignature(){
+  const c=document.getElementById('mobileDebtSignaturePad');if(!c)return;
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+  mobileDebtSignatureData='';
+}
+function mobileSignByName(){
+  const id=mobileSignInvoiceId.value;
+  const inv=(data.debtInvoices||[]).find(x=>x.id===id);if(!inv)return;
+  const c=document.getElementById('mobileDebtSignaturePad'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.font='italic 42px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(inv.customerName||'Khách hàng',c.width/2,c.height/2);
+  mobileDebtSignatureData=c.toDataURL('image/png');
+}
+async function confirmMobileDebtSignature(){
+  const id=mobileSignInvoiceId.value;
+  const inv=(data.debtInvoices||[]).find(x=>x.id===id);
+  if(!inv)return alert('Không tìm thấy phiếu.');
+  if(!mobileDebtSignatureData)return alert('Khách hàng cần ký xác nhận.');
+  try{
+    const ref=storeDoc().collection('debtInvoices').doc(id);
+    await ref.set({
+      signatureStatus:'signed',
+      signatureData:mobileDebtSignatureData,
+      signedAt:Date.now(),
+      signedByCustomerName:inv.customerName||'',
+      updatedAt:Date.now()
+    },{merge:true});
+    inv.signatureStatus='signed';
+    inv.signatureData=mobileDebtSignatureData;
+    inv.signedAt=Date.now();
+    inv.signedByCustomerName=inv.customerName||'';
+    closeModal('mobileDebtSignModal');
+    renderPendingSigns();
+    toast('✅ Đã lưu chữ ký xác nhận');
+  }catch(e){
+    alert('Không lưu được chữ ký: '+e.message);
+  }
+}
+
 function openCustomerMasterModal(id=''){
   const c=(data.customers||[]).find(x=>x.id===id);
   cmId.value=c?.id||'';
@@ -2200,7 +2306,7 @@ function finishCloseDay(){
     :`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Doanh thu ${money(sys)} · Bán nợ ${money(debt)} · Cần thực thu ${money(expectedCollected)} · Đã nhập ${money(actual)}.</small></div></div>`;
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function renderAll(){repairCustomerMaster();repairMissingSaleDates();renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers()}
+function renderAll(){repairCustomerMaster();repairMissingSaleDates();renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers();renderPendingSigns()}
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 load();populateBrandCatalogSelect();renderAll();
 </script></body></html>

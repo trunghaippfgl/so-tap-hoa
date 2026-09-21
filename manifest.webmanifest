@@ -1,5 +1,5 @@
 {
-  "name": "Sổ Tạp Hóa V1.2.5",
+  "name": "Sổ Tạp Hóa V1.2.6",
   "short_name": "Sổ Tạp Hóa",
   "start_url": "./",
   "display": "standalone",
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Realtime Sync giữa POS Windows và app điện thoại; tự refresh khi quay lại app hoặc có mạng lại."
+  "description": "Ký phiếu công nợ tạo từ POS Windows ngay trên điện thoại."
 }
