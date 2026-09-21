@@ -1,5 +1,5 @@
 {
-  "name": "Sổ Tạp Hóa V1.2.4",
+  "name": "Sổ Tạp Hóa V1.2.5",
   "short_name": "Sổ Tạp Hóa",
   "start_url": "./",
   "display": "standalone",
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "description": "Chốt ngày đối chiếu đúng thực thu sau khi loại phần bán nợ."
+  "description": "Realtime Sync giữa POS Windows và app điện thoại; tự refresh khi quay lại app hoặc có mạng lại."
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Sổ Tạp Hóa - MVP V1.2.4</title>
+<title>Sổ Tạp Hóa - MVP V1.2.5</title>
 <meta name="theme-color" content="#1f8f5f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -103,7 +103,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div><b id="authStatus">Chưa đăng nhập</b><br><span id="authStoreStatus">Chưa chọn cửa hàng</span><br><span id="authRoleStatus" class="tiny"></span></div>
 <div><button onclick="openAuthSetup()">Cửa hàng / Đăng nhập</button></div>
 </div>
-<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.4 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
+<header><div class="brand"><div class="logo"><img src="app-logo.png" alt="Sổ Tạp Hóa"></div><div><h1>Sổ Tạp Hóa</h1><div class="sub">Bán dễ · Kho rõ · Sổ doanh thu 2026 · V1.2.5 · Theo dõi ngưỡng 1 tỷ</div></div></div></header>
 
 <section id="home" class="screen on">
 <div class="card hero"><div class="label">DOANH THU HÔM NAY</div><div id="todayRevenue" class="kpi">0đ</div><div id="storeStatus" class="pill">🟢 CỬA HÀNG ỔN</div></div>
@@ -280,7 +280,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
-  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.4</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
+  <div class="card"><div class="label">Bản thử nghiệm</div><b>Sổ Tạp Hóa MVP V1.2.5</b><div class="tiny muted" style="margin-top:6px">Giao dịch cửa hàng hiện lưu trên thiết bị; kho barcode dùng Firestore Cloud. Bản này bổ sung sổ doanh thu & thuế 2026.</div></div>
 </section>
 
 <nav class="bottom">
@@ -1011,6 +1011,7 @@ async function resolveStoreForUser(uid){
 async function doLogin(){
   if(!cloudAuth)return alert('Firebase Auth chưa sẵn sàng');
   try{
+    stopRealtimeSync();
     const loginValue=authEmail.value.trim();
     const authEmailValue=authInputToEmail(loginValue);
     if(!authEmailValue)return alert('Nhập tên đăng nhập.');
@@ -1032,12 +1033,13 @@ async function doLogin(){
 }
 
 async function doLogout(){
+  stopRealtimeSync();
   if(cloudAuth)await cloudAuth.signOut();
   currentUser=null;currentStore={id:'',name:''};currentRole='';currentUsername='';
   localStorage.removeItem(STORE_KEY);updateAuthBar();showStoreOnboardingIfNeeded();
 }
 
-function saveStoreConfig(){alert('V1.2.4 tự nhận cửa hàng theo tài khoản đăng nhập.')}
+function saveStoreConfig(){alert('V1.2.5 tự nhận cửa hàng theo tài khoản đăng nhập.')}
 
 function updateAuthBar(){
   authStatus.textContent=currentUser?(currentUsername||'Đã đăng nhập'):'Chưa đăng nhập';
@@ -1171,11 +1173,103 @@ async function migrateLegacyMainIfNeeded(r){
   ensureSchema();localStorage.setItem(KEY,JSON.stringify(data));await pushCloudData();
 }
 
+
+let realtimeUnsubs=[];
+let realtimeRenderTimer=null;
+let realtimeStartedForStore='';
+let lastRealtimeAt=0;
+let realtimeSuppressUntil=0;
+
+function stopRealtimeSync(){
+  realtimeUnsubs.forEach(fn=>{try{fn()}catch(e){}});
+  realtimeUnsubs=[];
+  realtimeStartedForStore='';
+  if(realtimeRenderTimer){clearTimeout(realtimeRenderTimer);realtimeRenderTimer=null}
+}
+
+function scheduleRealtimeRender(sourceLabel='Cloud'){
+  if(Date.now()<realtimeSuppressUntil)return;
+  if(realtimeRenderTimer)clearTimeout(realtimeRenderTimer);
+  realtimeRenderTimer=setTimeout(()=>{
+    ensureSchema();
+    localStorage.setItem(KEY,JSON.stringify(data));
+    renderAll();
+    lastRealtimeAt=Date.now();
+    setSyncStatus('Realtime · '+sourceLabel+' · '+new Date().toLocaleTimeString('vi-VN'));
+  },180);
+}
+
+function snapshotArray(snap){
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+function startRealtimeSync(){
+  if(!cloudDb||!currentUser||!currentStore.id)return;
+  if(realtimeStartedForStore===currentStore.id&&realtimeUnsubs.length)return;
+  stopRealtimeSync();
+  realtimeStartedForStore=currentStore.id;
+  const r=storeDoc();
+
+  const watch=(collectionName,targetKey,label,transform)=>{
+    const unsub=r.collection(collectionName).onSnapshot(snap=>{
+      const arr=snapshotArray(snap);
+      data[targetKey]=transform?transform(arr):arr;
+      scheduleRealtimeRender(label);
+    },err=>{
+      console.warn('Realtime '+collectionName,err);
+      setSyncStatus('Realtime lỗi '+label+': '+err.message,false);
+    });
+    realtimeUnsubs.push(unsub);
+  };
+
+  watch('products','products','Kho');
+  watch('sales','sales','Bán hàng');
+  watch('imports','imports','Nhập hàng');
+  watch('closeDays','closeDays','Chốt ngày');
+  watch('externalRevenue','externalRevenue','Doanh thu');
+  watch('customerDebts','customerDebts','Công nợ KH');
+  watch('supplierDebts','supplierDebts','Nợ NCC');
+  watch('debtInvoices','debtInvoices','Phiếu nợ');
+  watch('customers','customers','Khách hàng');
+  watch('auditLog','auditLog','Nhật ký',arr=>arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)));
+
+  const taxUnsub=r.collection('settings').doc('taxProfile').onSnapshot(snap=>{
+    if(snap.exists)data.taxProfile=snap.data()||{};
+    scheduleRealtimeRender('Cấu hình');
+  },err=>console.warn('Realtime taxProfile',err));
+  realtimeUnsubs.push(taxUnsub);
+
+  lastRealtimeAt=Date.now();
+  setSyncStatus('Realtime đang hoạt động · '+new Date().toLocaleTimeString('vi-VN'));
+}
+
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible')return;
+  if(!currentUser||!currentStore.id)return;
+  // Mobile browsers may suspend Firestore listeners in background.
+  // When the app becomes visible again, refresh if the listener has been quiet.
+  if(!lastRealtimeAt || Date.now()-lastRealtimeAt>15000){
+    try{
+      await pullCloudData();
+      startRealtimeSync();
+    }catch(e){console.warn('Resume refresh',e)}
+  }
+});
+
+window.addEventListener('online',async()=>{
+  if(!currentUser||!currentStore.id)return;
+  try{
+    await pullCloudData();
+    startRealtimeSync();
+  }catch(e){console.warn('Online refresh',e)}
+});
+
 async function pullCloudData(){
   if(!cloudDb){setSyncStatus('Firestore chưa sẵn sàng',false);alert('Cloud chưa sẵn sàng. Kiểm tra kết nối mạng/Firebase.');return false}
   if(!currentUser){setSyncStatus('Chưa đăng nhập',false);alert('Bạn cần đăng nhập cửa hàng trước khi tải dữ liệu Cloud.');openAuthSetup();return false}
   if(!currentStore.id){setSyncStatus('Không xác định được cửa hàng',false);alert('Không xác định được cửa hàng của tài khoản này.');return false}
   try{
+    realtimeSuppressUntil=Date.now()+1500;
     setSyncStatus('Đang tải dữ liệu…');
     const r=storeDoc();await migrateLegacyMainIfNeeded(r);
     const [p,s,i,c,e,a,t]=await Promise.all([
@@ -1191,7 +1285,12 @@ async function pullCloudData(){
     data.debtInvoices=await readArray(r.collection('debtInvoices'));
     data.customers=await readArray(r.collection('customers'));
     ensureSchema();localStorage.setItem(KEY,JSON.stringify(data));renderAll();
-    cloudReady=true;setSyncStatus('Đã đồng bộ Cloud lúc '+new Date().toLocaleTimeString('vi-VN')+' · '+data.products.length+' SP · '+data.sales.length+' đơn');toast('☁️ Đã tải dữ liệu từ Cloud');return true;
+    cloudReady=true;
+    lastRealtimeAt=Date.now();
+    setSyncStatus('Đã đồng bộ Cloud lúc '+new Date().toLocaleTimeString('vi-VN')+' · '+data.products.length+' SP · '+data.sales.length+' đơn');
+    startRealtimeSync();
+    toast('☁️ Đã tải dữ liệu từ Cloud');
+    return true;
   }catch(e){console.warn(e);setSyncStatus('Đồng bộ lỗi: '+e.message,false);alert('Tải dữ liệu Cloud thất bại: '+e.message);return false}
 }
 
