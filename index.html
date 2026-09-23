@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta name="app-version" content="1.3.1">
+<meta name="app-version" content="1.3.2">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Sổ Tạp Hóa - MVP V1.2.6</title>
@@ -86,7 +86,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 }
 </style>
 </head>
-<body><div id="appUpdateNotice" hidden style="position:fixed;bottom:80px;left:12px;right:12px;z-index:99998;padding:12px;background:#fff3cd;border:1px solid #dfbd51;border-radius:12px"><span></span><button type="button" style="margin-top:8px">Cập nhật ngay</button></div><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.1 · Tự cập nhật</div>
+<body><div id="appUpdateNotice" hidden style="position:fixed;bottom:80px;left:12px;right:12px;z-index:99998;padding:12px;background:#fff3cd;border:1px solid #dfbd51;border-radius:12px"><span></span><button type="button" style="margin-top:8px">Cập nhật ngay</button></div><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.2 · Tự cập nhật</div>
 <div id="storeOnboarding" class="onboarding">
   <div class="onboarding-card">
     <div class="onboarding-logo">🏪</div>
@@ -390,9 +390,10 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <div class="card">
 <input id="dpType" type="hidden"><input id="dpId" type="hidden">
 <div id="dpTitle" style="font-size:18px;font-weight:800;margin-bottom:8px"></div>
-<label>Số tiền thanh toán</label><input id="dpAmount" type="number" min="1">
-<label>Phương thức thanh toán</label><select id="dpMethod"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select>
-<label>Ghi chú</label><input id="dpNote" placeholder="VD: Tiền mặt / chuyển khoản">
+<label>SỐ TIỀN THỰC TRẢ (đ)</label><input id="dpAmount" type="number" min="1" step="1" inputmode="numeric" oninput="previewDebtPayment()" placeholder="Khách trả 200.000đ → nhập 200000" style="font-size:24px;border:2px solid #177a46">
+<label>Phương thức thanh toán</label><select id="dpMethod"><option value="">Chọn phương thức đã nhận/trả tiền</option><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select>
+<label>Ghi chú</label><input id="dpNote" placeholder="Ghi chú thêm, không nhập số tiền vào đây">
+<div id="dpPreview" style="padding:12px;background:#e8f5ec;margin:12px 0;font-weight:700" aria-live="polite"></div>
 <button class="bigbtn" onclick="applyDebtPayment()">XÁC NHẬN THANH TOÁN</button>
 </div></div></div>
 
@@ -1786,16 +1787,24 @@ function openDebtPayment(type,id){
   const arr=type==='customer'?data.customerDebts:data.supplierDebts;
   const x=arr.find(v=>v.id===id);if(!x)return;
   dpType.value=type;dpId.value=id;dpTitle.textContent=(type==='customer'?'Thu nợ: ':'Trả nợ: ')+x.name+' · Còn '+money(x.balance);
-  dpAmount.value=x.balance;dpNote.value='';dpMethod.value='cash';debtPaymentModal.classList.add('on');
+  dpAmount.value='';dpNote.value='';dpMethod.value='';debtPaymentModal.classList.add('on');previewDebtPayment();dpAmount.focus();
+}
+function previewDebtPayment(){
+  const arr=dpType.value==='customer'?data.customerDebts:data.supplierDebts;
+  const x=arr.find(v=>v.id===dpId.value);if(!x)return;
+  const amount=Number(dpAmount.value);
+  const valid=Number.isSafeInteger(amount)&&amount>0&&amount<=Number(x.balance);
+  document.getElementById('dpPreview').textContent=valid?'Sẽ thanh toán: '+money(amount)+' · Còn nợ: '+money(Number(x.balance)-amount):'Nhập đúng số tiền thực trả ở ô phía trên.';
 }
 function applyDebtPayment(){
   const type=dpType.value,id=dpId.value,amount=Number(dpAmount.value)||0,note=dpNote.value.trim();
   const arr=type==='customer'?data.customerDebts:data.supplierDebts;
   const x=arr.find(v=>v.id===id);if(!x)return;
-  if(!Number.isFinite(amount)||amount<=0)return alert('Nhập số tiền thanh toán hợp lệ.');
+  if(!Number.isSafeInteger(amount)||amount<=0)return alert('Nhập số tiền thanh toán hợp lệ.');
   if(amount>Number(x.balance))return alert('Số tiền thanh toán lớn hơn số dư công nợ.');
   const method=dpMethod.value,at=Date.now();
-  if(!['cash','bank'].includes(method))return;
+  if(!['cash','bank'].includes(method))return alert('Chọn phương thức tiền mặt hoặc chuyển khoản.');
+  if(!confirm(`Xác nhận ${type==='customer'?'thu':'trả'} ${money(amount)} bằng ${method==='bank'?'chuyển khoản':'tiền mặt'}?\nKhách/nhà cung cấp: ${x.name}\nCòn nợ: ${money(Number(x.balance)-amount)}`))return;
   const previousDebt=Number(x.balance);
   x.balance=previousDebt-amount;x.payments=x.payments||[];x.payments.push({amount,note,method,createdAt:at,createdBy:currentUser.uid});x.updatedAt=at;
   if(type==='customer')data.debtPayments.push({id:'DP-'+crypto.randomUUID(),customerId:x.customerId||'',debtId:x.id,customerName:x.name||'',customerPhone:x.phone||'',amount,previousDebt,remainingDebt:x.balance,method,note,createdAt:at,createdBy:currentUser.uid,createdByRole:currentRole,source:'mobile-pos-sync-1.3.0',balanceScope:'debt'});
