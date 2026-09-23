@@ -85,7 +85,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 }
 </style>
 </head>
-<body>
+<body><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.0 · Đồng bộ POS</div>
 <div id="storeOnboarding" class="onboarding">
   <div class="onboarding-card">
     <div class="onboarding-logo">🏪</div>
@@ -248,7 +248,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
     <div class="sectiontitle"><h2>🧮 Đối chiếu doanh thu</h2></div>
     <label>Doanh thu HĐĐT/hệ thống hóa đơn hôm nay (nếu có)</label>
     <input id="invoiceRevenue" type="number" inputmode="numeric" placeholder="Nhập để đối chiếu" oninput="renderTax()">
-    <div id="taxResult" style="margin-top:10px"></div>
+    <div class="card"><b>Tiền thu tháng này · Đồng bộ POS</b><div id="mobileCashflow"></div><small>Thu nợ tính theo ngày thu, không cộng lại vào doanh thu. Khoản thu cũ thiếu phương thức cần đối chiếu riêng.</small></div><div id="taxResult" style="margin-top:10px"></div>
   </div>
   <div class="card">
     <div class="label">HỒ SƠ THUẾ</div>
@@ -271,7 +271,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div class="card"><div class="sectiontitle"><h2>☁️ Trạng thái hệ thống</h2></div>
 <div id="productionSyncStatus" class="cloud-status">Đang kiểm tra Cloud…</div>
 <div id="cloudDiag" class="tiny muted" style="margin-top:6px">Cloud là nguồn dữ liệu chính. Đồng bộ sẽ tải lại dữ liệu của đúng cửa hàng đang đăng nhập.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ SAO LƯU</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ ĐỒNG BỘ</button><button class="bigbtn secondary" onclick="pushCloudData()">🔄 KIỂM TRA ĐỒNG BỘ</button></div></div>
 
 <div class="card">
   <div class="sectiontitle"><h2>🏪 Cửa hàng hiện tại</h2></div>
@@ -285,7 +285,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 <div id="memberList" style="margin-top:8px"></div></div>
 <div class="card"><div class="sectiontitle"><h2>☁️ Production</h2></div>
 <div class="taxnote">Đăng nhập + storeId để đồng bộ bán hàng, tồn kho, chốt ngày, nhật ký và hồ sơ thuế lên Firestore.</div>
-<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">⬆️ ĐẨY LÊN CLOUD</button></div></div>
+<div class="grid2" style="margin-top:10px"><button class="bigbtn secondary" onclick="pullCloudData()">⬇️ TẢI TỪ CLOUD</button><button class="bigbtn secondary" onclick="pushCloudData()">🔄 KIỂM TRA ĐỒNG BỘ</button></div></div>
   <div class="sectiontitle"><h2>⚙️ Thêm</h2></div>
   <div class="card"><button class="bigbtn secondary" style="margin-top:8px" onclick="exportData()">💾 Sao lưu dữ liệu JSON</button><button class="bigbtn secondary" style="margin-top:8px" onclick="go('tax');setTimeout(renderS1a,100)">📚 MỞ SỔ S1a-HKD</button></div>
   <div class="card"><button class="bigbtn secondary" onclick="openBrandCatalog()">🏷️ KHO SẢN PHẨM THEO HÃNG</button><div class="tiny muted" style="margin-top:8px">Kho nhiều hãng lớn tại Việt Nam. Barcode chưa có dữ liệu online vẫn có thể gắn vào sản phẩm trong kho hãng một lần rồi app sẽ nhớ.</div></div>
@@ -390,6 +390,7 @@ Hệ thống sẽ tự tạo mã cửa hàng (storeId), tài khoản chủ cửa
 <input id="dpType" type="hidden"><input id="dpId" type="hidden">
 <div id="dpTitle" style="font-size:18px;font-weight:800;margin-bottom:8px"></div>
 <label>Số tiền thanh toán</label><input id="dpAmount" type="number" min="1">
+<label>Phương thức thanh toán</label><select id="dpMethod"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select>
 <label>Ghi chú</label><input id="dpNote" placeholder="VD: Tiền mặt / chuyển khoản">
 <button class="bigbtn" onclick="applyDebtPayment()">XÁC NHẬN THANH TOÁN</button>
 </div></div></div>
@@ -1057,6 +1058,7 @@ async function doLogin(){
 }
 
 async function doLogout(){
+  if(mobileBusy)return toast('Đang lưu, vui lòng chờ.');
   stopRealtimeSync();
   if(cloudAuth)await cloudAuth.signOut();
   currentUser=null;currentStore={id:'',name:''};currentRole='';currentUsername='';
@@ -1094,14 +1096,6 @@ function assertDayUnlocked(date){
   return true;
 }
 function entityId(x,prefix){return String(x.id||x.date||prefix+Date.now()+Math.random().toString(36).slice(2,7))}
-async function writeArray(ref,arr,prefix){
-  arr=arr||[];
-  for(let i=0;i<arr.length;i+=300){
-    const b=cloudDb.batch();
-    arr.slice(i,i+300).forEach(x=>b.set(ref.doc(entityId(x,prefix)),x,{merge:true}));
-    await b.commit();
-  }
-}
 
 async function writeAuditLogNewOnly(ref,arr){
   arr=arr||[];
@@ -1120,83 +1114,14 @@ async function writeAuditLogNewOnly(ref,arr){
   }
 }
 
-async function readArray(ref){const q=await ref.get();return q.docs.map(d=>({id:d.id,...d.data()}))}
+async function readArray(ref){const q=await ref.get({source:'server'});return q.docs.map(d=>({...d.data(),id:d.id}))}
 
 async function pushCloudData(){
-  if(!cloudDb){setSyncStatus('Firestore chưa sẵn sàng',false);alert('Cloud chưa sẵn sàng. Kiểm tra kết nối mạng/Firebase.');return false}
-  if(!currentUser){setSyncStatus('Chưa đăng nhập',false);alert('Bạn cần đăng nhập cửa hàng trước khi sao lưu Cloud.');openAuthSetup();return false}
-  if(!currentStore.id){setSyncStatus('Không xác định được cửa hàng',false);alert('Không xác định được cửa hàng của tài khoản này.');return false}
-
-  let stage='khởi tạo';
-  try{
-    setSyncStatus('Đang sao lưu…');
-    const r=storeDoc();
-
-    stage='thông tin cửa hàng';
-    await r.set({name:currentStore.name||currentStore.id,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-
-    stage='sản phẩm';
-    await writeArray(r.collection('products'),data.products,'P');
-
-    stage='bán hàng';
-    await writeArray(r.collection('sales'),data.sales,'S');
-
-    stage='nhập hàng';
-    await writeArray(r.collection('imports'),data.imports,'I');
-
-    stage='chốt ngày';
-    await writeArray(r.collection('closeDays'),data.closeDays,'C');
-
-    stage='doanh thu ngoài';
-    await writeArray(r.collection('externalRevenue'),data.externalRevenue,'E');
-
-    // Audit log is immutable in Firestore Rules:
-    // only create entries that do not exist yet; never merge/update old logs.
-    stage='khách hàng';
-    await writeArray(r.collection('customers'),data.customers,'CUS');
-
-    stage='công nợ khách hàng';
-    await writeArray(r.collection('customerDebts'),data.customerDebts,'CD');
-
-    stage='nợ nhà cung cấp';
-    await writeArray(r.collection('supplierDebts'),data.supplierDebts,'SD');
-
-    stage='phiếu công nợ';
-    await writeArray(r.collection('debtInvoices'),data.debtInvoices,'DN');
-
-    stage='nhật ký hệ thống';
-    await writeAuditLogNewOnly(r.collection('auditLog'),data.auditLog);
-
-    // taxProfile is manager/owner-only in Rules. Staff should not rewrite it
-    // every time they merely edit stock or create a sale.
-    if(currentRole==='owner'||currentRole==='manager'){
-      stage='cấu hình thuế';
-      await r.collection('settings').doc('taxProfile').set(data.taxProfile||{},{merge:true});
-    }
-
-    cloudReady=true;
-    setSyncStatus('Đã sao lưu Cloud lúc '+new Date().toLocaleTimeString('vi-VN'));
-    toast('☁️ Đã sao lưu lên Cloud');
-    return true;
-  }catch(e){
-    console.warn('Cloud sync failed at',stage,e);
-    setSyncStatus('Sao lưu lỗi tại '+stage+': '+e.message,false);
-    alert('Sao lưu Cloud thất bại tại ['+stage+']: '+e.message);
-    return false;
-  }
+  if(mobileBusy)return toast('Đang lưu, vui lòng chờ.');
+  return pullCloudData();
 }
 
-async function migrateLegacyMainIfNeeded(r){
-  const any=await r.collection('products').limit(1).get();
-  if(!any.empty)return;
-  const old=await r.collection('appData').doc('main').get();
-  if(!old.exists)return;
-  const x=old.data()||{};
-  ['products','sales','imports','closeDays','externalRevenue','auditLog'].forEach(k=>{if(Array.isArray(x[k]))data[k]=x[k]});
-  if(x.taxProfile)data.taxProfile=x.taxProfile;
-  ensureSchema();localStorage.setItem(KEY,JSON.stringify(data));await pushCloudData();
-}
-
+async function migrateLegacyMainIfNeeded(){/* Migration is never automatic on shared POS data. */}
 
 let realtimeUnsubs=[];
 let realtimeRenderTimer=null;
@@ -1224,7 +1149,7 @@ function scheduleRealtimeRender(sourceLabel='Cloud'){
 }
 
 function snapshotArray(snap){
-  return snap.docs.map(d=>({id:d.id,...d.data()}));
+  return snap.docs.map(d=>({...d.data(),id:d.id}));
 }
 
 function startRealtimeSync(){
@@ -1252,12 +1177,14 @@ function startRealtimeSync(){
   watch('closeDays','closeDays','Chốt ngày');
   watch('externalRevenue','externalRevenue','Doanh thu');
   watch('customerDebts','customerDebts','Công nợ KH');
+  watch('debtPayments','debtPayments','Phiếu thu nợ');
   watch('supplierDebts','supplierDebts','Nợ NCC');
   watch('debtInvoices','debtInvoices','Phiếu nợ');
   watch('customers','customers','Khách hàng');
   watch('auditLog','auditLog','Nhật ký',arr=>arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)));
 
   const taxUnsub=r.collection('settings').doc('taxProfile').onSnapshot(snap=>{
+    mobileTaxExists=snap.exists;
     if(snap.exists)data.taxProfile=snap.data()||{};
     scheduleRealtimeRender('Cấu hình');
   },err=>console.warn('Realtime taxProfile',err));
@@ -1303,7 +1230,9 @@ async function pullCloudData(){
     ]);
     data.products=p;data.sales=s;data.imports=i;data.closeDays=c;data.externalRevenue=e;
     data.auditLog=a.sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
+    mobileTaxExists=t.exists;
     if(t.exists)data.taxProfile=t.data()||{};
+    data.debtPayments=await readArray(r.collection('debtPayments'));
     data.customerDebts=await readArray(r.collection('customerDebts'));
     data.supplierDebts=await readArray(r.collection('supplierDebts'));
     data.debtInvoices=await readArray(r.collection('debtInvoices'));
@@ -1318,7 +1247,7 @@ async function pullCloudData(){
   }catch(e){console.warn(e);setSyncStatus('Đồng bộ lỗi: '+e.message,false);alert('Tải dữ liệu Cloud thất bại: '+e.message);return false}
 }
 
-function scheduleCloudSync(){if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushCloudData(),800)}
+function scheduleCloudSync(){/* Each business action commits its own transaction. */}
 
 const KEY='soTapHoaMvp01';
 const BRAND_CATALOG=[{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Không đường","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Không đường","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Không đường","size":"1L","base":"hộp","caseSize":12,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Ít đường","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Có đường","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi tiệt trùng","name":"Vinamilk 100% Sôcôla","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa tươi","name":"Green Farm Rất ít đường","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa hạt","name":"Vinamilk 9 loại hạt Ít đường","size":"180ml","base":"hộp","caseSize":24,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa hạt","name":"Vinamilk 9 loại hạt","size":"1L","base":"hộp","caseSize":12,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa hạt","name":"Vinamilk Đậu nành Óc chó","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa hạt","name":"Vinamilk Đậu nành Hạnh nhân","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa dinh dưỡng trẻ em","name":"ADM Hương Dâu","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa dinh dưỡng trẻ em","name":"Optimum Gold","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa dinh dưỡng trẻ em","name":"Dielac Grow Plus","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa dinh dưỡng trẻ em","name":"ColosGold","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa chua uống","name":"SuSu Hương Cam","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa chua uống","name":"SuSu Hương Dâu","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa chua uống","name":"SuSu Hương Việt Quất Chuối","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Thức uống sữa","name":"SuSu Sôcôla Lúa mạch","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Nước ép","name":"Vfresh Cam","size":"1L","base":"hộp","caseSize":12,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Nước ép","name":"Vfresh Táo","size":"1L","base":"hộp","caseSize":12,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa đặc","name":"Ông Thọ Nhãn đỏ","size":"380g","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Sữa đặc","name":"Ngôi Sao Phương Nam","size":"380g","base":"hộp","caseSize":48,"source":"https://www.vinamilk.com.vn/"},{"brand":"Vinamilk","category":"Kem","name":"Vinamilk Sôcôla","size":"400ml","base":"hộp","caseSize":12,"source":"https://www.vinamilk.com.vn/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Nguyên Chất","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Ít Đường","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Có Đường","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Nguyên Chất","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Ít Đường","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Có Đường","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Hương Dâu","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Sô Cô La","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Hương Chuối","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Nguyên Chất","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Ít Đường","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa tươi tiệt trùng","name":"TH true MILK Có Đường","size":"110ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua","name":"TH true YOGURT Có Đường","size":"100g","base":"hộp","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua","name":"TH true YOGURT Ít Đường","size":"100g","base":"hộp","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua","name":"TH true YOGURT Nha Đam","size":"100g","base":"hộp","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua","name":"TH true YOGURT Dừa","size":"100g","base":"hộp","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua uống","name":"TH true YOGURT Hương Cam","size":"180ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa chua uống","name":"TH true YOGURT Hương Dâu","size":"180ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Hạnh Nhân","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Macca","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Óc Chó","size":"180ml","base":"hộp","caseSize":48,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Hạnh Nhân","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Macca","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Sữa hạt","name":"TH true NUT Óc Chó","size":"1L","base":"hộp","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Nước tinh khiết","name":"TH true WATER","size":"350ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Nước tinh khiết","name":"TH true WATER","size":"500ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Nước tinh khiết","name":"TH true WATER","size":"1.5L","base":"chai","caseSize":12,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Trà","name":"TH true TEA Trà Xanh Không Đường","size":"350ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"TH true MILK","category":"Trà","name":"TH true TEA Hương Đào Không Đường","size":"350ml","base":"chai","caseSize":24,"source":"https://www.thmilk.vn/san-pham/"},{"brand":"Acecook","category":"Mì gói","name":"Hảo Hảo Tôm Chua Cay","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Hảo Hảo Gà Vàng","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Hảo Hảo Premium Tôm Chua Cay","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Hảo Hảo Premium Mì Trộn Bò Sa Tế","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Mì Quen Gà Lá Chanh","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Mì Quen Canh Chua Tôm","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Mì Quen Bò Sa Tế","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Modern","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Modern Xtreme","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Lẩu Thái","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Siu Kay","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Đệ Nhất","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Hảo 100","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Bốn Phương","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Mikochi","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Mì gói","name":"Good","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Phở","name":"Phở Đệ Nhất","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Miến","name":"Miến Phú Hương","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Hủ tiếu","name":"Hủ tiếu Nhịp Sống","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Cháo","name":"Cháo ăn liền OHAYO","size":"","base":"gói","caseSize":30,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Gia vị","name":"Muối chấm Hảo Hảo","size":"","base":"hộp","caseSize":1,"source":"https://acecookvietnam.vn/product/"},{"brand":"Acecook","category":"Gia vị","name":"Gia vị chiên cơm Rang Rang","size":"","base":"gói","caseSize":1,"source":"https://acecookvietnam.vn/product/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Omachi Bò Hầm","size":"","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Omachi Tôm Chua Cay","size":"","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Omachi Sườn Hầm Ngũ Quả","size":"","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Omachi Mì Xốt Bò Bằm","size":"90g","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì ly","name":"Omachi Ly Bò Hầm","size":"","base":"ly","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì ly","name":"Omachi Ly Tôm Chua Cay","size":"","base":"ly","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Kokomi Tôm Chua Cay","size":"65g","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Kokomi Bò Hầm Rau Thơm","size":"75g","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Mì gói","name":"Kokomi Đại 90 Tôm Chua Cay","size":"","base":"gói","caseSize":30,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Tương Ớt","size":"250g","base":"chai","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Tương Ớt","size":"500g","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Tương Ớt","size":"1kg","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Tương Cà","size":"250g","base":"chai","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Tương Cà","size":"500g","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Nước Tương Tỏi Ớt","size":"330ml","base":"chai","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Nước Mắm Cá Cơm Biển Đông","size":"720ml","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Hạt Nêm Tôm Thịt","size":"400g","base":"gói","caseSize":20,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"CHIN-SU Hạt Nêm Tôm Thịt","size":"900g","base":"gói","caseSize":10,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"Nam Ngư Nước Mắm","size":"","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Gia vị","name":"Nam Ngư Nước Chấm Tiết Kiệm","size":"800ml","base":"chai","caseSize":12,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Nước tăng lực","name":"Wake-Up 247 Hương Cà Phê","size":"","base":"lon","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Nước tăng lực","name":"Wake-Up 247 Amazon","size":"","base":"lon","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Nước tăng lực","name":"Compact Hương Dứa","size":"","base":"lon","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Cà phê hòa tan","name":"Wake-Up 3 trong 1 Sài Gòn","size":"","base":"gói","caseSize":20,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Cà phê hòa tan","name":"Wake-Up 3 trong 1 Mekong","size":"","base":"gói","caseSize":20,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Cà phê hòa tan","name":"Vinacafé Special 3 trong 1","size":"","base":"gói","caseSize":20,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Masan Consumer","category":"Nước khoáng","name":"Vĩnh Hảo Không Ga","size":"350ml","base":"chai","caseSize":24,"source":"https://masanconsumer.com/en/products/brand/"},{"brand":"Nestlé","category":"Ngũ cốc","name":"Nestlé Corn Flakes","size":"","base":"hộp","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Ngũ cốc","name":"Nestlé Honey Stars","size":"","base":"hộp","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Ngũ cốc","name":"Nestlé Koko Krunch","size":"","base":"hộp","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Ngũ cốc","name":"Nestlé MILO Cereal","size":"","base":"hộp","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Thức uống dinh dưỡng","name":"Nestlé MILO Bột","size":"","base":"hộp","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Cà phê","name":"NESCAFÉ Café Việt Đen Đá","size":"","base":"gói","caseSize":20,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Cà phê","name":"NESCAFÉ Café Việt Cà Phê Sữa","size":"","base":"gói","caseSize":20,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Gia vị","name":"MAGGI Hạt Nêm","size":"","base":"gói","caseSize":20,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Gia vị","name":"MAGGI Nước Tương","size":"","base":"chai","caseSize":24,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Gia vị","name":"MAGGI Dầu Hào","size":"","base":"chai","caseSize":24,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Bánh","name":"KitKat Chocolate","size":"","base":"thanh","caseSize":24,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Dinh dưỡng trẻ em","name":"NAN Optipro 4","size":"","base":"lon","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Nestlé","category":"Dinh dưỡng trẻ em","name":"NAN Supreme 3","size":"","base":"lon","caseSize":1,"source":"https://www.nestle.com.vn/vi/info/sitemap"},{"brand":"Coca-Cola","category":"Nước ngọt có ga","name":"Coca-Cola Vị Nguyên Bản","size":"330ml","base":"lon","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước ngọt có ga","name":"Coca-Cola Zero Sugar","size":"330ml","base":"lon","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước ngọt có ga","name":"Coca-Cola Light","size":"330ml","base":"lon","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước ngọt có ga","name":"Sprite","size":"330ml","base":"lon","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước ngọt có ga","name":"Fanta Cam","size":"330ml","base":"lon","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước lọc","name":"Dasani","size":"","base":"chai","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Coca-Cola","category":"Nước thể thao","name":"Aquarius","size":"","base":"chai","caseSize":24,"source":"https://www.coca-cola.com/vn/vi/brands"},{"brand":"Suntory PepsiCo","category":"Nước ngọt có ga","name":"Pepsi","size":"","base":"lon","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước ngọt có ga","name":"Pepsi Không Calo","size":"","base":"lon","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước ngọt có ga","name":"7UP","size":"","base":"lon","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước ngọt có ga","name":"Mirinda Cam","size":"","base":"lon","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước tăng lực","name":"Sting Dâu Đỏ","size":"","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước tăng lực","name":"Sting Gold","size":"","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước tinh khiết","name":"Aquafina","size":"500ml","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Trà","name":"TEA+ Plus Ô Long","size":"","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Nước thể thao","name":"Revive","size":"","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Suntory PepsiCo","category":"Trà","name":"Lipton Ice Tea","size":"","base":"chai","caseSize":24,"source":"https://www.suntorypepsico.vn/danh-muc-tin-tuc/ho-so-tu-cong-bo"},{"brand":"Ajinomoto","category":"Gia vị","name":"AJI-NO-MOTO Bột Ngọt","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Hạt nêm","name":"Aji-ngon Heo","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Hạt nêm","name":"Aji-ngon Gà","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Hạt nêm","name":"Aji-ngon Nấm","size":"200g","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Hạt nêm","name":"Aji-ngon Heo Giảm Muối","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Mayonnaise","name":"Aji-mayo Vị Nguyên Bản","size":"","base":"chai","caseSize":12,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Mayonnaise","name":"Aji-mayo Vị Ngọt Dịu","size":"130g","base":"chai","caseSize":12,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Nước tương","name":"Phú Sĩ Nước Tương","size":"","base":"chai","caseSize":24,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Nước tương","name":"Phú Sĩ Giảm Muối","size":"","base":"chai","caseSize":24,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Gia vị nêm sẵn","name":"Aji-Quick Cá Kho","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Gia vị nêm sẵn","name":"Aji-Quick Thịt Kho","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Gia vị nêm sẵn","name":"Aji-Quick Phở Bò","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Gia vị nêm sẵn","name":"Aji-Quick Bún Bò Huế","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Bột chiên","name":"Aji-Quick Bột Tẩm Khô Chiên Giòn","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Ajinomoto","category":"Trà sữa","name":"Blendy Royal Milk Tea","size":"","base":"gói","caseSize":20,"source":"https://www.ajinomoto.com.vn/vi/domestic-products"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"Cosy Bánh Quy","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"AFC Bánh Quy Giòn","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"OREO Original","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"OREO Chocolate","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh","name":"Solite Bánh Bông Lan","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Snack","name":"Slide Khoai Tây Lát","size":"","base":"hộp","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"RITZ Crackers","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh quy","name":"LU Biscuits","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Sô cô la","name":"Toblerone","size":"","base":"thanh","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Sô cô la","name":"Cadbury Dairy Milk","size":"","base":"thanh","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"Mondelez Kinh Đô","category":"Bánh mì","name":"Kinh Đô Bánh Mì Tươi","size":"","base":"gói","caseSize":1,"source":"https://www.mondelezinternational.com/vietnam-vietnamese/"},{"brand":"P&G","category":"Giặt xả","name":"Ariel Nước Giặt","size":"","base":"chai","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Giặt xả","name":"Ariel Bột Giặt","size":"","base":"gói","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Giặt xả","name":"Downy Nước Xả Vải","size":"","base":"chai","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Giặt xả","name":"Tide Bột Giặt","size":"","base":"gói","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Chăm sóc bé","name":"Pampers Tã Em Bé","size":"","base":"gói","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Chăm sóc cá nhân","name":"Gillette Dao Cạo","size":"","base":"cái","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Chăm sóc da","name":"Olay Chăm Sóc Da","size":"","base":"chai","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"P&G","category":"Khử mùi","name":"Ambi Pur","size":"","base":"chai","caseSize":1,"source":"https://vn.pg.com/cac-nhan-hieu-va-cac-san-pham/"},{"brand":"Unilever","category":"Giặt xả","name":"OMO Bột Giặt","size":"","base":"gói","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Giặt xả","name":"OMO Nước Giặt","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Giặt xả","name":"Comfort Nước Xả Vải","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Rửa chén","name":"Sunlight Nước Rửa Chén","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Vệ sinh","name":"Cif Nước Tẩy Rửa","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Chăm sóc cá nhân","name":"Lifebuoy Xà Phòng","size":"","base":"cục","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Chăm sóc tóc","name":"Sunsilk Dầu Gội","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Chăm sóc tóc","name":"Clear Dầu Gội","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Chăm sóc cá nhân","name":"Dove Sữa Tắm","size":"","base":"chai","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Chăm sóc răng miệng","name":"P/S Kem Đánh Răng","size":"","base":"tuýp","caseSize":1,"source":"https://www.unilever.com.vn/"},{"brand":"Unilever","category":"Gia vị","name":"Knorr Hạt Nêm","size":"","base":"gói","caseSize":1,"source":"https://www.unilever.com.vn/"}];
@@ -1346,6 +1275,7 @@ function ensureSchema(){
   if(!Array.isArray(data.auditLog))data.auditLog=[];
   if(!data.taxProfile)data.taxProfile={businessName:'',taxCode:'',address:''};
 
+  data.debtPayments=data.debtPayments||[];
   data.customerDebts=data.customerDebts||[];
   data.supplierDebts=data.supplierDebts||[];
 
@@ -1354,7 +1284,7 @@ function ensureSchema(){
   data.customers=data.customers||[];
 }
 function load(){try{data=JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){data=seed()}ensureSchema();try{currentStore=JSON.parse(localStorage.getItem(STORE_KEY)||'{}')||{}}catch(e){currentStore={}}localStorage.setItem(KEY,JSON.stringify(data));updateAuthBar()}
-function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();scheduleCloudSync()}
+function save(){if(mobileBusy){mobileDirty=true;return;}localStorage.setItem(KEY,JSON.stringify(data));renderAll();if(currentUser&&currentStore.id&&navigator.onLine)writeAuditLogNewOnly(storeDoc().collection('auditLog'),data.auditLog).catch(e=>setSyncStatus('Chưa lưu được nhật ký: '+e.message,false));}
 function loadDemo(){data=seed();cart={};save();toast('Đã nạp lại dữ liệu mẫu')}
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));document.getElementById(id).classList.add('on');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.nav===id));renderAll();if(id==='more')setTimeout(renderMembers,0);window.scrollTo({top:0,behavior:'smooth'})}
 function openImport(){if(!canEditStoreData())return alert('Bạn không có quyền nhập hàng.');fillImportProducts();document.getElementById('importModal').classList.add('on')}
@@ -1591,7 +1521,7 @@ async function confirmDebtCheckout(){
     previousDebt:oldDebt,
     newDebt:saleAmount,
     totalDebt:oldDebt+saleAmount,
-    signatureData:debtSignatureData,
+    signatureData:debtSignatureData,signatureStatus:'signed',signedAt:Date.now(),
     createdAt:Date.now()
   };
   data.debtInvoices.push(invoice);
@@ -1811,7 +1741,7 @@ function openSupplierDebtModal(){
 function saveCustomerDebt(){
   const name=cdName.value.trim(),phone=cdPhone.value.trim(),amount=Number(cdAmount.value)||0,note=cdNote.value.trim();
   if(!name||amount<=0)return alert('Nhập tên khách hàng và số tiền nợ.');
-  data.customerDebts.push({id:'CD-'+Date.now(),name,phone,originalAmount:amount,balance:amount,note,status:'open',payments:[],createdAt:Date.now(),updatedAt:Date.now()});
+  data.customerDebts.push({id:'CD-'+Date.now(),customerId:ensureCustomerRecord(name,phone).id,name,phone,originalAmount:amount,balance:amount,note,status:'open',payments:[],createdAt:Date.now(),updatedAt:Date.now()});
   addAudit('customer_debt_created','Ghi nợ khách hàng '+name+' · '+amount);
   save();closeModal('customerDebtModal');renderCustomerDebts();toast('Đã ghi nợ khách hàng');
 }
@@ -1855,15 +1785,19 @@ function openDebtPayment(type,id){
   const arr=type==='customer'?data.customerDebts:data.supplierDebts;
   const x=arr.find(v=>v.id===id);if(!x)return;
   dpType.value=type;dpId.value=id;dpTitle.textContent=(type==='customer'?'Thu nợ: ':'Trả nợ: ')+x.name+' · Còn '+money(x.balance);
-  dpAmount.value=x.balance;dpNote.value='';debtPaymentModal.classList.add('on');
+  dpAmount.value=x.balance;dpNote.value='';dpMethod.value='cash';debtPaymentModal.classList.add('on');
 }
 function applyDebtPayment(){
   const type=dpType.value,id=dpId.value,amount=Number(dpAmount.value)||0,note=dpNote.value.trim();
   const arr=type==='customer'?data.customerDebts:data.supplierDebts;
   const x=arr.find(v=>v.id===id);if(!x)return;
-  if(amount<=0)return alert('Nhập số tiền thanh toán.');
+  if(!Number.isFinite(amount)||amount<=0)return alert('Nhập số tiền thanh toán hợp lệ.');
   if(amount>Number(x.balance))return alert('Số tiền thanh toán lớn hơn số dư công nợ.');
-  x.balance=Number(x.balance)-amount;x.payments=x.payments||[];x.payments.push({amount,note,createdAt:Date.now()});x.updatedAt=Date.now();
+  const method=dpMethod.value,at=Date.now();
+  if(!['cash','bank'].includes(method))return;
+  const previousDebt=Number(x.balance);
+  x.balance=previousDebt-amount;x.payments=x.payments||[];x.payments.push({amount,note,method,createdAt:at,createdBy:currentUser.uid});x.updatedAt=at;
+  if(type==='customer')data.debtPayments.push({id:'DP-'+crypto.randomUUID(),customerId:x.customerId||'',debtId:x.id,customerName:x.name||'',customerPhone:x.phone||'',amount,previousDebt,remainingDebt:x.balance,method,note,createdAt:at,createdBy:currentUser.uid,createdByRole:currentRole,source:'mobile-pos-sync-1.3.0',balanceScope:'debt'});
   if(x.balance<=0){x.balance=0;x.status='paid'}
   addAudit(type==='customer'?'customer_debt_payment':'supplier_debt_payment',(type==='customer'?'Thu nợ ':'Trả nợ ')+x.name+' · '+amount);
   save();closeModal('debtPaymentModal');renderCustomerDebts();renderSupplierDebts();toast(type==='customer'?'Đã ghi nhận thu nợ':'Đã ghi nhận trả nợ');
@@ -2136,7 +2070,7 @@ function pickBrandProduct(idx){
 function openNewProduct(){['newName','newPrice','newBarcode'].forEach(id=>document.getElementById(id).value='');document.getElementById('catalogPickedHint').style.display='none';document.getElementById('newBase').value='cái';document.getElementById('newCase').value='1';document.getElementById('newProductModal').classList.add('on')}
 function saveNewProduct(){let name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value)||0,base=document.getElementById('newBase').value.trim()||'cái',caseSize=Math.max(1,Number(document.getElementById('newCase').value)||1),barcode=document.getElementById('newBarcode').value.trim();if(!name||price<=0)return toast('Nhập tên và giá bán');if(barcode&&data.products.some(p=>p.barcode===barcode))return toast('Barcode này đã có');let cat=BRAND_CATALOG.find(x=>normText((x.name+(x.size?' '+x.size:'')))===normText(name));let p={id:'p'+Date.now(),barcode,name,base,caseName:'thùng/lốc',caseSize,stock:0,cost:0,price,expiry:'',brand:cat?cat.brand:'',category:cat?cat.category:'',catalogSource:cat?(BRAND_SOURCES[cat.brand]||'official brand website'):''};data.products.unshift(p);save();closeModal('newProductModal');addCart(p.id);toast('✅ Đã tạo hàng mới')}
 function renderStock(){let q=(document.getElementById('stockSearch').value||'').toLowerCase();let arr=data.products.filter(p=>(p.name+' '+(p.barcode||'')).toLowerCase().includes(q));document.getElementById('stockList').innerHTML=arr.map(p=>{let d=daysLeft(p.expiry),tag='';if(d!==null){tag=d<0?`<span class="pill red">Quá hạn ${-d} ngày</span>`:d<=7?`<span class="pill red">Còn ${d} ngày</span>`:d<=30?`<span class="pill amber">Còn ${d} ngày</span>`:''}return `<div class="product stock-edit" onclick="openProductEdit('${p.id}')"><div><div class="name">${escHtml(p.name)}</div><small>${p.barcode?escHtml(p.barcode)+' · ':''}Tồn ${p.stock} ${escHtml(p.base)} · vốn ${money(p.cost)} · bán ${money(p.price)}${p.cloudSource&&p.price===0&&p.stock===0?' · ⚠️ Chưa nhập giá/tồn':''}</small><div style="margin-top:5px">${tag}</div></div><div class="right"><div class="money">${money(p.stock*p.cost)}</div><small>✏️ Sửa${p.stock<=5?' · ⚠️ sắp hết':''}</small></div></div>`}).join('');document.getElementById('stockValue').textContent=money(data.products.reduce((a,p)=>a+p.stock*p.cost,0));document.getElementById('lowCount').textContent=data.products.filter(p=>p.stock<=5).length}
-function openProductEdit(id){const p=data.products.find(x=>x.id===id);if(!p)return;editProductId.value=p.id;editName.value=p.name||'';editBarcode.value=p.barcode||'';editPrice.value=p.price||0;editCost.value=p.cost||0;editStock.value=p.stock||0;editBase.value=p.base||'cái';editCase.value=p.caseSize||1;editExpiry.value=p.expiry||'';editStockModal.classList.add('on')}
+function openProductEdit(id){const p=data.products.find(x=>x.id===id);if(!p)return;mobileEditOrigin=mobileClone(p);editProductId.value=p.id;editName.value=p.name||'';editBarcode.value=p.barcode||'';editPrice.value=p.price||0;editCost.value=p.cost||0;editStock.value=p.stock||0;editBase.value=p.base||'cái';editCase.value=p.caseSize||1;editExpiry.value=p.expiry||'';editStockModal.classList.add('on')}
 function saveProductEdit(){if(!canEditStoreData())return alert('Bạn không có quyền sửa kho.');const p=data.products.find(x=>x.id===editProductId.value);if(!p)return;const old={stock:p.stock,price:p.price,cost:p.cost};const barcode=editBarcode.value.trim();if(barcode&&data.products.some(x=>x.id!==p.id&&x.barcode===barcode))return alert('Barcode này đã thuộc sản phẩm khác.');p.name=editName.value.trim()||p.name;p.barcode=barcode;p.price=Math.max(0,Number(editPrice.value)||0);p.cost=Math.max(0,Number(editCost.value)||0);p.stock=Math.max(0,Number(editStock.value)||0);p.base=editBase.value.trim()||'cái';p.caseSize=Math.max(1,Number(editCase.value)||1);p.expiry=editExpiry.value||'';addAudit('product_edited','Sửa kho '+p.name+' · tồn '+old.stock+'→'+p.stock+' · giá bán '+money(old.price)+'→'+money(p.price));save();closeModal('editStockModal');toast('✅ Đã cập nhật kho')}
 function fillImportProducts(){document.getElementById('impProduct').innerHTML=data.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');syncImportPrice()}
 function syncImportPrice(){let p=data.products.find(x=>x.id===document.getElementById('impProduct').value);if(p)document.getElementById('impCost').value=p.cost}
@@ -2155,7 +2089,7 @@ function customerReceivableTotal(){
 }
 
 function renderTax(){
-  ensureSchema();
+  ensureSchema();renderMobileCashflow();
   const y=currentYear(),annual=yearRevenue(y),pct=Math.min(100,annual/1000000000*100);
   document.getElementById('taxYearPill').textContent='Năm '+y;
   document.getElementById('annualRevenue').textContent=money(annual);
@@ -2209,8 +2143,16 @@ function cancelSale(id){
   const s=data.sales.find(v=>v.id===id);if(!s||s.cancelled)return;if(!assertDayUnlocked(s.date))return;
   const reason=prompt('Lý do hủy giao dịch:');if(!reason)return;
   if(!confirm('Hủy giao dịch '+id+' và hoàn lại tồn kho?'))return;
-  (s.items||[]).forEach(it=>{const p=data.products.find(x=>x.id===it.productId);if(p)p.stock+=Number(it.qty||0)});
-  s.cancelled=true;s.cancelReason=reason;s.cancelledAt=Date.now();addAudit('sale_cancelled','Hủy '+id+' · '+money(s.total)+' · Lý do: '+reason);save();toast('Đã hủy và hoàn tồn kho');
+  if(s.method==='debt'){
+    const debts=data.customerDebts.filter(x=>x.saleId===s.id),invoices=data.debtInvoices.filter(x=>x.saleId===s.id);
+    if(!debts.length||!invoices.length)return alert('Thiếu phiếu nợ liên kết. Cần đối chiếu trước khi hủy.');
+    if(debts.some(x=>(x.payments||[]).length||Number(x.balance)!==Number(x.originalAmount)))return alert('Đơn nợ đã thu tiền hoặc điều chỉnh. Cần đối chiếu trước khi hủy.');
+    if(debts.reduce((n,x)=>n+Number(x.balance),0)!==Number(s.total))return alert('Công nợ không khớp đơn.');
+    debts.forEach(x=>{x.balance=0;x.status='cancelled';x.cancelledAt=Date.now();x.cancelReason=reason;});
+    invoices.forEach(x=>{x.status='cancelled';x.cancelledAt=Date.now();x.cancelReason=reason;});
+  }
+  for(const it of s.items||[]){const p=data.products.find(x=>x.id===it.productId);if(!p)throw new Error('Sản phẩm không còn tồn tại.');p.stock=Number(p.stock||0)+Number(it.qty||0);} 
+  s.cancelled=true;s.cancelReason=reason;s.cancelledAt=Date.now();s.cancelledBy=currentUser.uid;addAudit('sale_cancelled','Hủy '+id+' · '+money(s.total)+' · Lý do: '+reason);save();toast('Đã hủy và hoàn tồn kho');
 }
 function s1aRows(y=currentYear()){
   const map={};
@@ -2246,7 +2188,7 @@ function debtRevenueForDate(date){
     .reduce((a,s)=>a+Number(s.total||0),0);
 }
 function collectedRevenueForDate(date){
-  return businessRevenueForDate(date)-debtRevenueForDate(date);
+  return businessRevenueForDate(date)-debtRevenueForDate(date)+mobileDebtCollected(date).total;
 }
 function updateCloseActualPreview(){
   const cash=Number(closeCash?.value)||0,bank=Number(closeBank?.value)||0;
@@ -2258,7 +2200,7 @@ function updateCloseActualPreview(){
 
 function openCloseDay(){
   if(!canEditStoreData())return alert('Tài khoản này không có quyền chốt ngày.');
-  const sys=revenue(),debt=debtRevenueForDate(today()),expected=sys-debt;
+  const sys=revenue(),debt=debtRevenueForDate(today()),expected=collectedRevenueForDate(today());
   closeSys.textContent=money(sys);
   closeDebt.textContent=money(debt);
   closeExpectedCollected.textContent=money(expected);
@@ -2276,7 +2218,7 @@ function finishCloseDay(){
   const actual=cash+bank;
   const sys=revenue();
   const debt=debtRevenueForDate(today());
-  const expectedCollected=sys-debt;
+  const expectedCollected=collectedRevenueForDate(today());
   const diff=actual-expectedCollected;
   const old=data.closeDays.find(x=>x.date===today());
 
@@ -2302,11 +2244,126 @@ function finishCloseDay(){
   save();
 
   closeResult.innerHTML=Math.abs(diff)<1
-    ?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Doanh thu ${money(sys)} − bán nợ ${money(debt)} = thực thu cần đối chiếu ${money(expectedCollected)}. Bạn đã nhập thực thu ${money(actual)}.</small></div></div>`
+    ?`<div class="alert green"><div>✅</div><div><b>KHỚP HOÀN TOÀN</b><small>Doanh thu ${money(sys)} − bán nợ ${money(debt)} + thu nợ = thực thu cần đối chiếu ${money(expectedCollected)}. Bạn đã nhập thực thu ${money(actual)}.</small></div></div>`
     :`<div class="alert red"><div>⚠️</div><div><b>${diff>0?'THỪA':'THIẾU'} ${money(Math.abs(diff))}</b><small>Doanh thu ${money(sys)} · Bán nợ ${money(debt)} · Cần thực thu ${money(expectedCollected)} · Đã nhập ${money(actual)}.</small></div></div>`;
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function renderAll(){repairCustomerMaster();repairMissingSaleDates();renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers();renderPendingSigns()}
+function renderAll(){renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers();renderPendingSigns()}
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+// Mobile POS sync 1.3.0: compare-and-set only fields changed by this action.
+let mobileBusy=false,mobileDirty=false,mobileEditOrigin=null,mobileTaxExists=false;
+const mobileCollections=['products','sales','imports','closeDays','externalRevenue','customers','customerDebts','supplierDebts','debtInvoices','debtPayments','auditLog'];
+const mobileClone=x=>JSON.parse(JSON.stringify(x));
+function mobileEqual(a,b){
+  const normal=x=>Array.isArray(x)?x.map(normal):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,normal(x[k])])):x;
+  return JSON.stringify(normal(a))===JSON.stringify(normal(b));
+}
+function mobileChanges(before,after){
+  const changes=[];
+  for(const collection of mobileCollections){
+    const key=x=>String(x.id||x.date||'');
+    const old=new Map((before[collection]||[]).map(x=>[key(x),x]));
+    const next=new Map((after[collection]||[]).map(x=>[key(x),x]));
+    for(const [id,row]of next){
+      if(!id)throw new Error('Bản ghi thiếu mã: '+collection);
+      const previous=old.get(id);
+      const patch=Object.fromEntries(Object.entries(row).filter(([k,v])=>!previous||!mobileEqual(previous[k],v)));
+      if(Object.keys(patch).length)changes.push({collection,id,previous,patch});
+    }
+    for(const id of old.keys())if(!next.has(id))throw new Error('Không tự xóa bản ghi Cloud. Vui lòng dùng thao tác hủy.');
+  }
+  if(!mobileEqual(before.taxProfile,after.taxProfile))changes.push({collection:'settings',id:'taxProfile',previous:mobileTaxExists?before.taxProfile:undefined,patch:after.taxProfile});
+  return changes;
+}
+async function mobileCommit(root,changes){
+  if(changes.length>400)throw new Error('Quá nhiều thay đổi trong một lần. Vui lòng chia nhỏ.');
+  await cloudDb.runTransaction(async tx=>{
+    const pending=[];
+    for(const c of changes){
+      const ref=root.collection(c.collection).doc(c.id),snap=await tx.get(ref);
+      if(!c.previous){if(snap.exists)throw new Error('Mã giao dịch đã tồn tại. Vui lòng tải lại.');}
+      else{
+        if(!snap.exists)throw new Error('Dữ liệu đã bị xóa hoặc chưa được đồng bộ: '+c.collection);
+        const live=snap.data();
+        for(const k of Object.keys(c.patch)){
+          if(k==='id'&&live.id===undefined)continue;
+          if(!mobileEqual(live[k],c.previous[k]))throw new Error('Dữ liệu đã thay đổi trên máy khác ('+c.collection+'). Chưa lưu; hãy kiểm tra rồi thử lại.');
+        }
+        // A concurrent cancellation must also invalidate payments or other edits.
+        for(const k of ['cancelled','status'])if(!mobileEqual(live[k],c.previous[k]))throw new Error('Trạng thái giao dịch đã thay đổi.');
+      }
+      pending.push({ref,c});
+    }
+    for(const {ref,c}of pending){if(c.previous)tx.update(ref,c.patch);else tx.set(ref,c.patch);}
+  });
+}
+function mobileDebtCollected(prefix){
+  const date=x=>{const t=x.createdAt?.toMillis?x.createdAt.toMillis():Number(x.createdAt);if(!Number.isFinite(t)||t<=0)return '';const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+  const rows=(data.debtPayments||[]).filter(x=>!x.cancelled&&x.status!=='cancelled'&&date(x).startsWith(prefix));
+  const sum=method=>rows.filter(x=>!method||x.method===method).reduce((n,x)=>n+(Number(x.amount)||0),0);
+  return {cash:sum('cash'),bank:sum('bank'),total:sum()};
+}
+function renderMobileCashflow(){
+  const box=document.getElementById('mobileCashflow');if(!box)return;
+  const m=today().slice(0,7),paid=mobileDebtCollected(m),sales=(data.sales||[]).filter(x=>!x.cancelled&&String(x.date||'').startsWith(m));
+  const sum=method=>sales.filter(x=>x.method===method).reduce((n,x)=>n+Number(x.total||0),0);
+  box.innerHTML=`<p>Tiền mặt bán hàng + thu nợ: <b>${money(sum('cash')+paid.cash)}</b></p><p>Chuyển khoản bán hàng + thu nợ: <b>${money(sum('bank')+paid.bank)}</b></p><p>Đã thu nợ tháng: <b>${money(paid.total)}</b></p><p>Bán nợ phát sinh: <b>${money(sum('debt'))}</b></p><small>Chưa gồm doanh thu ngoài app. Nợ còn phải thu ở ô phía trên là số dư mọi kỳ.</small>`;
+}
+function installMobileMutations(){
+  const names=['checkout','confirmDebtCheckout','applyDebtPayment','saveProductEdit','saveImport','cancelSale','saveCustomerMaster','saveCustomerDebt','saveSupplierDebt','saveNewProduct','saveNoBarcodeProduct','saveExternalRevenue','cancelExternalRevenue','saveTaxProfile','unlockToday','finishCloseDay','addSelectedCloudSuggestionsToStore'];
+  for(const name of names){
+    const original=window[name];
+    if(typeof original!=='function')continue;
+    window[name]=async function(...args){
+      if(mobileBusy)return;
+      if(!navigator.onLine||!cloudDb||!currentUser||!currentStore.id||!cloudReady)return alert('Cần đăng nhập, có mạng và tải dữ liệu Cloud trước khi lưu.');
+      if(!canEditStoreData()||!licenseCanWrite())return alert('Tài khoản không có quyền ghi dữ liệu.');
+      const before=mobileClone(data),oldCart=mobileClone(cart),root=storeDoc();
+      const oldToast=toast,oldClose=closeModal,oldGo=go,effects=[];
+      mobileBusy=true;mobileDirty=false;stopRealtimeSync();
+      const shield=document.createElement('div');shield.style.cssText='position:fixed;inset:0;z-index:99999;background:#ffffff88;display:grid;place-items:center;font-weight:bold';shield.textContent='Đang lưu lên Cloud…';document.body.appendChild(shield);
+      toast=(...x)=>effects.push(()=>oldToast(...x));closeModal=(...x)=>effects.push(()=>oldClose(...x));go=(...x)=>effects.push(()=>oldGo(...x));
+      let committed=false;
+      try{
+        if(name==='saveProductEdit'){
+          const live=data.products.find(x=>x.id===editProductId.value),origin=mobileEditOrigin;
+          if(!origin||!live||origin.id!==live.id)throw new Error('Vui lòng mở lại sản phẩm.');
+          const fields={editName:'name',editBarcode:'barcode',editPrice:'price',editCost:'cost',editStock:'stock',editBase:'base',editCase:'caseSize',editExpiry:'expiry'};
+          for(const [id,key]of Object.entries(fields)){
+            const input=document.getElementById(id),numeric=['price','cost','stock','caseSize'].includes(key);
+            const value=numeric?Number(input.value):input.value;
+            const old=numeric?Number(origin[key]||0):String(origin[key]||'');
+            if(numeric&&(!Number.isFinite(value)||value<0))throw new Error('Giá/số lượng không hợp lệ.');
+            if(value===old)input.value=live[key]??'';
+            else if(!mobileEqual(live[key],origin[key]))throw new Error('Sản phẩm đã thay đổi. Mở lại trước khi sửa.');
+          }
+        }
+        await original(...args);
+        const after=mobileClone(data),nextCart=mobileClone(cart);
+        data=before;cart=oldCart;
+        toast=oldToast;closeModal=oldClose;go=oldGo;
+        if(!mobileDirty)return;
+        const changes=mobileChanges(before,after);
+        await mobileCommit(root,changes);
+        committed=true;data=after;cart=nextCart;
+        localStorage.setItem(KEY,JSON.stringify(data));
+        for(const effect of effects)effect();
+        oldToast('Đã lưu giao dịch lên Cloud');
+      }catch(e){
+        if(!committed){data=before;cart=oldCart;}
+        alert((committed?'Đã lưu Cloud nhưng chưa cập nhật màn hình: ':'Chưa lưu giao dịch: ')+e.message);
+      }finally{
+        toast=oldToast;closeModal=oldClose;go=oldGo;mobileBusy=false;shield.remove();
+        renderAll();
+        // Reload authoritative state on success and conflict, never re-push local arrays.
+        await pullCloudData();
+      }
+    };
+  }
+  // Demo data must not replace a connected store.
+  loadDemo=()=>alert('Dữ liệu mẫu không được nạp đè cửa hàng đang đồng bộ.');
+}
+installMobileMutations();
+
 load();populateBrandCatalogSelect();renderAll();
 </script></body></html>
