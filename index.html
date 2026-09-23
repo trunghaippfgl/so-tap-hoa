@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="vi">
 <head>
+<meta name="app-version" content="1.3.1">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Sổ Tạp Hóa - MVP V1.2.6</title>
@@ -85,7 +86,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 }
 </style>
 </head>
-<body><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.0 · Đồng bộ POS</div>
+<body><div id="appUpdateNotice" hidden style="position:fixed;bottom:80px;left:12px;right:12px;z-index:99998;padding:12px;background:#fff3cd;border:1px solid #dfbd51;border-radius:12px"><span></span><button type="button" style="margin-top:8px">Cập nhật ngay</button></div><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.1 · Tự cập nhật</div>
 <div id="storeOnboarding" class="onboarding">
   <div class="onboarding-card">
     <div class="onboarding-logo">🏪</div>
@@ -2249,7 +2250,7 @@ function finishCloseDay(){
 }
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='so-tap-hoa-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
 function renderAll(){renderHome();renderSellProducts();renderCart();renderStock();renderTax();renderCustomerDebts();renderSupplierDebts();renderCustomers();renderPendingSigns()}
-if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+
 // Mobile POS sync 1.3.0: compare-and-set only fields changed by this action.
 let mobileBusy=false,mobileDirty=false,mobileEditOrigin=null,mobileTaxExists=false;
 const mobileCollections=['products','sales','imports','closeDays','externalRevenue','customers','customerDebts','supplierDebts','debtInvoices','debtPayments','auditLog'];
@@ -2346,6 +2347,7 @@ function installMobileMutations(){
         const changes=mobileChanges(before,after);
         await mobileCommit(root,changes);
         committed=true;data=after;cart=nextCart;
+        window.dispatchEvent(new Event('pos:saved'));
         localStorage.setItem(KEY,JSON.stringify(data));
         for(const effect of effects)effect();
         oldToast('Đã lưu giao dịch lên Cloud');
@@ -2366,4 +2368,59 @@ function installMobileMutations(){
 installMobileMutations();
 
 load();populateBrandCatalogSelect();renderAll();
+// PWA updates: check on foreground/online; never reload a sale or unsaved form.
+function startAppUpdates(){
+  if(!('serviceWorker' in navigator)||!location.protocol.startsWith('http'))return;
+  let registration=null,controllerChanged=false,reloading=false,formDirty=false,lastInput=Date.now();
+  const hadController=!!navigator.serviceWorker.controller;
+  const notice=document.getElementById('appUpdateNotice');
+  function busy(){
+    return mobileBusy||Object.keys(cart||{}).length>0||!!document.querySelector('.modal.on');
+  }
+  function ready(){return !busy()&&!formDirty&&document.visibilityState==='visible'&&navigator.onLine&&Date.now()-lastInput>=15000;}
+  function pending(){return controllerChanged||!!registration?.waiting;}
+  function apply(){
+    if(reloading||!pending()||!ready())return;
+    if(controllerChanged){reloading=true;location.reload();}
+    else registration.waiting.postMessage({type:'ACTIVATE_UPDATE'});
+  }
+  function show(){
+    if(!notice)return;
+    notice.hidden=!pending();
+    if(pending())notice.querySelector('span').textContent=busy()||formDirty?'Có bản mới. App sẽ chờ bạn hoàn tất thao tác.':'Đã tải bản mới. App sẽ tự cập nhật khi bạn tạm ngừng thao tác.';
+  }
+  function changed(){show();apply();}
+  async function check(){
+    if(!navigator.onLine||document.visibilityState!=='visible'||!registration)return;
+    try{await registration.update();changed();}catch(e){console.info('Update check deferred',e.message);}
+  }
+  document.addEventListener('input',()=>{formDirty=true;lastInput=Date.now();});
+  document.addEventListener('change',()=>{formDirty=true;lastInput=Date.now();});
+  document.addEventListener('pointerdown',()=>{lastInput=Date.now();});
+  document.addEventListener('keydown',()=>{lastInput=Date.now();});
+  window.addEventListener('pos:saved',()=>{formDirty=false;lastInput=Date.now();changed();});
+  if(notice)notice.querySelector('button').onclick=()=>{
+    if(busy())return toast('Hãy hoàn tất giỏ hàng, đóng cửa sổ nhập và chờ lưu xong trước khi cập nhật.');
+    if(formDirty&&!confirm('Có nội dung đang nhập chưa lưu. Bỏ nội dung đó và cập nhật?'))return;
+    formDirty=false;lastInput=0;apply();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!hadController)return; // First install must not reload the current session.
+    controllerChanged=true;changed();
+  });
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+    registration=reg;
+    reg.addEventListener('updatefound',()=>{
+      const worker=reg.installing;
+      worker?.addEventListener('statechange',()=>{if(worker.state==='installed')changed();});
+    });
+    changed();check();
+  }).catch(e=>console.info('Update unavailable',e.message));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){lastInput=Date.now();check();}});
+  window.addEventListener('online',check);
+  setInterval(check,120000);
+  setInterval(changed,3000);
+}
+setTimeout(startAppUpdates,0);
+
 </script></body></html>
