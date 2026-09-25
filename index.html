@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta name="app-version" content="1.3.2">
+<meta name="app-version" content="1.3.3">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Sổ Tạp Hóa - MVP V1.2.6</title>
@@ -86,7 +86,7 @@ input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--l
 }
 </style>
 </head>
-<body><div id="appUpdateNotice" hidden style="position:fixed;bottom:80px;left:12px;right:12px;z-index:99998;padding:12px;background:#fff3cd;border:1px solid #dfbd51;border-radius:12px"><span></span><button type="button" style="margin-top:8px">Cập nhật ngay</button></div><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.2 · Tự cập nhật</div>
+<body><div id="appUpdateNotice" hidden style="position:fixed;bottom:80px;left:12px;right:12px;z-index:99998;padding:12px;background:#fff3cd;border:1px solid #dfbd51;border-radius:12px"><span></span><button type="button" style="margin-top:8px">Cập nhật ngay</button></div><div style="background:#e8f5ec;padding:6px;text-align:center;font-size:12px">Sổ Tạp Hóa · Mobile 1.3.3 · Tự cập nhật</div>
 <div id="storeOnboarding" class="onboarding">
   <div class="onboarding-card">
     <div class="onboarding-logo">🏪</div>
@@ -2150,6 +2150,8 @@ function renderSalesAudit(){
   box.innerHTML=arr.length?arr.map(s=>`<div class="item"><div><b>${fmtDate(s.date)} · ${s.id}</b><div class="tiny muted">${s.method==='cash'?'Tiền mặt':s.method==='bank'?'Chuyển khoản':s.method==='debt'?'Bán nợ':'Khác'} · ${(s.items||[]).length} mặt hàng${s.cancelReason?' · Lý do hủy: '+escHtml(s.cancelReason):''}</div></div><div style="text-align:right"><b>${money(s.total)}</b><div>${s.cancelled?'<span class="badge red">Đã hủy</span>':`<button class="circle" onclick="cancelSale('${s.id}')">↩</button>`}</div></div></div>`).join(''):'<div class="tiny muted" style="margin-top:8px">Chưa có giao dịch.</div>';
 }
 function cancelSale(id){
+ const returnedSale=(data.sales||[]).find(x=>x.id===id);if(returnedSale?.returns?.length)return alert('Đơn đã trả từng món. Vui lòng xử lý phần còn lại trên POS Windows.');
+
   const s=data.sales.find(v=>v.id===id);if(!s||s.cancelled)return;if(!assertDayUnlocked(s.date))return;
   const reason=prompt('Lý do hủy giao dịch:');if(!reason)return;
   if(!confirm('Hủy giao dịch '+id+' và hoàn lại tồn kho?'))return;
@@ -2198,7 +2200,7 @@ function debtRevenueForDate(date){
     .reduce((a,s)=>a+Number(s.total||0),0);
 }
 function collectedRevenueForDate(date){
-  return businessRevenueForDate(date)-debtRevenueForDate(date)+mobileDebtCollected(date).total;
+  return businessRevenueForDate(date)-debtRevenueForDate(date)+mobileDebtCollected(date).total+mobileRefundAdjustment(date,'cash')+mobileRefundAdjustment(date,'bank');
 }
 function updateCloseActualPreview(){
   const cash=Number(closeCash?.value)||0,bank=Number(closeBank?.value)||0;
@@ -2307,6 +2309,14 @@ async function mobileCommit(root,changes){
     for(const {ref,c}of pending){if(c.previous)tx.update(ref,c.patch);else tx.set(ref,c.patch);}
   });
 }
+function mobileRefundAdjustment(prefix,method){
+ let total=0;
+ for(const sale of data.sales||[])for(const r of sale.returns||[]){
+  if(sale.method===method&&String(sale.date||'').startsWith(prefix))total+=Number(r.amount)||0;
+  if(r.refundMethod===method&&String(r.date||'').startsWith(prefix))total-=Number(r.refund)||0;
+ }
+ return total;
+}
 function mobileDebtCollected(prefix){
   const date=x=>{const t=x.createdAt?.toMillis?x.createdAt.toMillis():Number(x.createdAt);if(!Number.isFinite(t)||t<=0)return '';const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
   const rows=(data.debtPayments||[]).filter(x=>!x.cancelled&&x.status!=='cancelled'&&date(x).startsWith(prefix));
@@ -2317,7 +2327,7 @@ function renderMobileCashflow(){
   const box=document.getElementById('mobileCashflow');if(!box)return;
   const m=today().slice(0,7),paid=mobileDebtCollected(m),sales=(data.sales||[]).filter(x=>!x.cancelled&&String(x.date||'').startsWith(m));
   const sum=method=>sales.filter(x=>x.method===method).reduce((n,x)=>n+Number(x.total||0),0);
-  box.innerHTML=`<p>Tiền mặt bán hàng + thu nợ: <b>${money(sum('cash')+paid.cash)}</b></p><p>Chuyển khoản bán hàng + thu nợ: <b>${money(sum('bank')+paid.bank)}</b></p><p>Đã thu nợ tháng: <b>${money(paid.total)}</b></p><p>Bán nợ phát sinh: <b>${money(sum('debt'))}</b></p><small>Chưa gồm doanh thu ngoài app. Nợ còn phải thu ở ô phía trên là số dư mọi kỳ.</small>`;
+  box.innerHTML=`<p>Tiền mặt sau hoàn trả + thu nợ: <b>${money(sum('cash')+paid.cash+mobileRefundAdjustment(m,'cash'))}</b></p><p>Chuyển khoản sau hoàn trả + thu nợ: <b>${money(sum('bank')+paid.bank+mobileRefundAdjustment(m,'bank'))}</b></p><p>Đã thu nợ tháng: <b>${money(paid.total)}</b></p><p>Bán nợ phát sinh: <b>${money(sum('debt'))}</b></p><small>Chưa gồm doanh thu ngoài app. Nợ còn phải thu ở ô phía trên là số dư mọi kỳ.</small>`;
 }
 function installMobileMutations(){
   const names=['checkout','confirmDebtCheckout','applyDebtPayment','saveProductEdit','saveImport','cancelSale','saveCustomerMaster','saveCustomerDebt','saveSupplierDebt','saveNewProduct','saveNoBarcodeProduct','saveExternalRevenue','cancelExternalRevenue','saveTaxProfile','unlockToday','finishCloseDay','addSelectedCloudSuggestionsToStore'];

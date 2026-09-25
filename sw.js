@@ -1,5 +1,5 @@
 // Increment VERSION together with app-version in index.html for each release.
-const VERSION='1.3.2';
+const VERSION='1.3.3';
 const C='so-tap-hoa-mobile-'+VERSION;
 self.addEventListener('install',e=>e.waitUntil((async()=>{
  const response=await fetch(new Request('./index.html',{cache:'no-store'}));
